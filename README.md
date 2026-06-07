@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="image_5f73928f.png" alt="Aegis Flow Banner" width="100%"/>
+  <img src="banner.png" alt="Aegis Flow Banner" width="100%"/>
 </p>
 
 <h1 align="center">⚡ Aegis Flow — Command Center</h1>
