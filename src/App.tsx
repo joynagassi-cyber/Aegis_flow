@@ -486,10 +486,10 @@ export default function App() {
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--text-muted)]">
-                  Titan-VII
-                </p>
-                <h1 className="mt-1 font-syne text-2xl font-bold">Deep Space Command Center</h1>
+                  <p className="text-[11px] uppercase tracking-[0.4em] text-[var(--text-muted)]">
+                    Aegis Flow
+                  </p>
+                  <h1 className="mt-1 font-syne text-2xl font-bold">Command Center</h1>
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
                 <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-muted)]">
@@ -1415,7 +1415,7 @@ export default function App() {
                 </p>
                 <h2 className="mt-2 font-syne text-2xl font-bold">Planning quotidien optimisé</h2>
                 <p className="mt-2 text-sm text-[var(--text-muted)]">
-                  L'emploi du temps TITAN-VII intègre tous les objectifs du programme 210 jours.
+                  L'emploi du temps Aegis Flow intègre tous les objectifs du programme 210 jours.
                 </p>
               </div>
 

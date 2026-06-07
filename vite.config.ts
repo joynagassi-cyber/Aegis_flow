@@ -18,8 +18,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicons/*"],
       manifest: {
-        name: "TITAN-VII Command Center",
-        short_name: "TITAN-VII",
+        name: "Aegis Flow",
+        short_name: "Aegis Flow",
         description: "Personal management dashboard for elite performance",
         theme_color: "#0a0a0f",
         background_color: "#0a0a0f",

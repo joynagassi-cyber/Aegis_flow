@@ -38,7 +38,7 @@ export const AuthModal = ({ onSuccess }: { onSuccess: () => void }) => {
         <div className="space-y-4">
           <input 
             type="email" 
-            placeholder="identifiant@titan.com" 
+            placeholder="identifiant@aegis.com" 
             className="w-full p-4 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl text-[var(--text)] placeholder-[var(--text-muted)] focus:border-[var(--primary)] transition shadow-inner font-mono-num text-sm"
             onChange={(e) => setEmail(e.target.value)}
           />

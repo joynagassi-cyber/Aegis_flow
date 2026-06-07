@@ -1,7 +1,7 @@
 import { insforge } from './insforge';
 
-const STORAGE_KEY = 'TITAN_VII_COMMAND_STATE';
-const PENDING_SYNC_KEY = 'TITAN_VII_PENDING_MUTATIONS';
+const STORAGE_KEY = 'AEGIS_FLOW_STATE';
+const PENDING_SYNC_KEY = 'AEGIS_FLOW_PENDING_MUTATIONS';
 
 export const SyncManager = {
   // Lire l'état actuel (Priorité Locale)
