@@ -1,0 +1,342 @@
+@import "tailwindcss";
+
+/* ==========================================
+   THEME VARIABLES — PREMIUM COMMAND CENTER
+   ========================================== */
+:root, [data-theme="dark"] {
+  --bg: #030303;          /* Noir absolu profond */
+  --surface: #0a0a0a;     /* Carte principale */
+  --surface-2: #111111;   /* Carte secondaire / Input */
+  --surface-3: #1a1a1a;   /* Élément interne */
+  
+  --primary: #0066FF;     /* Bleu Cobalt Électrique */
+  --primary-glow: rgba(0, 102, 255, 0.4);
+  --secondary: #0052CC;
+  --accent: #00B4FF;      /* Cyan lumineux */
+  --success: #00E676;     /* Vert néon pour succès */
+  --danger: #FF1744;      /* Rouge néon pour alerte */
+  --warning: #FFD600;     /* Jaune pour attention */
+  
+  --border: #222222;      /* Bordure subtile */
+  --border-active: #0066FF; /* Bordure active bleue */
+  
+  --text: #FFFFFF;        /* Blanc pur */
+  --text-muted: #888888;  /* Gris neutre */
+  --text-subtle: #444444; /* Gris très sombre */
+}
+
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --surface: #F8F9FA;
+  --surface-2: #E9ECEF;
+  --surface-3: #DEE2E6;
+  
+  --primary: #0066FF;
+  --primary-glow: rgba(0, 102, 255, 0.2);
+  --secondary: #0052CC;
+  --accent: #00B4FF;
+  --success: #00C853;
+  --danger: #D50000;
+  --warning: #FFAB00;
+  
+  --border: #E0E0E0;
+  --border-active: #0066FF;
+  
+  --text: #111111;
+  --text-muted: #666666;
+  --text-subtle: #999999;
+}
+
+/* ==========================================
+   BASE & TYPOGRAPHY
+   ========================================== */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+  /* Subtle grid pattern background for tech feel */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+[data-theme="light"] body {
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+}
+
+.font-syne { font-family: 'Syne', sans-serif; }
+.font-mono-num { font-family: 'JetBrains Mono', monospace; }
+.font-body { font-family: 'DM Sans', sans-serif; }
+
+/* ==========================================
+   COMMAND CARDS — MODULE STYLE
+   ========================================== */
+.command-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Light Mode - High Contrast & Clean */
+[data-theme="light"] .command-card {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .command-card:hover {
+  border-color: #0066FF;
+  box-shadow: 0 8px 20px rgba(0, 102, 255, 0.10);
+}
+
+/* Effet de lueur interne subtile en haut */
+.command-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+.command-card:hover {
+  border-color: var(--border-active);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -12px var(--primary-glow);
+}
+
+.command-card-small {
+  border-radius: 16px !important;
+  padding: 16px 20px !important;
+}
+
+/* ==========================================
+   UI ELEMENTS
+   ========================================== */
+/* Bouton Primaire — Electric Blue */
+.btn-primary {
+  background: var(--primary);
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--primary-glow);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: var(--secondary);
+  box-shadow: 0 0 30px var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+/* Bouton Secondaire */
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--surface-3);
+}
+
+/* Badges / Pills */
+.badge-pill {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+}
+
+.badge-completed {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--success);
+  border-color: rgba(0, 230, 118, 0.3);
+}
+
+.badge-in-progress {
+  background: rgba(0, 102, 255, 0.1);
+  color: var(--accent);
+  border-color: rgba(0, 102, 255, 0.3);
+}
+
+.badge-todo {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Progress Bars — Neon Style */
+.progress-track {
+  background: var(--surface-3);
+  border-radius: 999px;
+  height: 6px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  box-shadow: 0 0 10px var(--primary-glow);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Checkbox */
+.checkbox-custom {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px; /* Carré arrondi moderne */
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+}
+
+.checkbox-custom.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px var(--primary-glow); }
+  50% { box-shadow: 0 0 25px var(--primary-glow); }
+}
+
+@keyframes kenBurns {
+  0%   { transform: scale(1.04) translate(0px, 0px); }
+  33%  { transform: scale(1.09) translate(-8px, -4px); }
+  66%  { transform: scale(1.06) translate(4px, -2px); }
+  100% { transform: scale(1.04) translate(0px, 0px); }
+}
+
+@keyframes timerProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Light Mode Banner Overlay */
+[data-theme="light"] .banner-overlay {
+  background: linear-gradient(
+    110deg,
+    rgba(10, 26, 58, 0.82) 0%,
+    rgba(0, 40, 100, 0.40) 45%,
+    rgba(0, 102, 255, 0.10) 100%
+  );
+}
+
+/* Improve button contrast in light mode */
+[data-theme="light"] .btn-primary {
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: #F8F9FA;
+  border-color: #DEE2E6;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ==========================================
+   LIGHT MODE FINAL POLISH
+   ========================================== */
+[data-theme="light"] {
+  /* Make sure text is always dark and readable */
+  color: var(--text);
+}
+
+[data-theme="light"] .banner-tag,
+[data-theme="light"] .hero-greeting,
+[data-theme="light"] .hero-quote,
+[data-theme="light"] .hero-author,
+[data-theme="light"] .hero-ring-pct,
+[data-theme="light"] .hero-ring-label,
+[data-theme="light"] .hero-days-left {
+  color: #FFFFFF;
+}
+
+[data-theme="light"] .hero-pill {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+}
+
+/* Improve checkbox visibility in light mode */
+[data-theme="light"] .checkbox-custom {
+  border-color: #B0B0B0;
+  background: #FFFFFF;
+}
+
+[data-theme="light"] .checkbox-custom.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
