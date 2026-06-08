@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import {} from 'react';
 
 export function NumberField({
   label,

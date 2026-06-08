@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, CalendarDays, Target, BarChart3, MessageSquare, Timer,
-  BookOpen, CheckCircle2, Sparkles, ArrowRight, ChevronDown,
-  BrainCircuit, LineChart, Workflow, Shield, Layers, Zap,
+  CheckCircle2, ArrowRight, ChevronDown,
+  Layers,
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { AuthModal } from '../components/AuthModal';
@@ -274,7 +274,7 @@ export function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-32">
-            {FEATURES.slice(0, 6).map((f, i) => {
+            {FEATURES.slice(0, 6).map((f) => {
               const Icon = f.icon;
               return (
                 <div

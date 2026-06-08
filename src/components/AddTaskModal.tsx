@@ -16,7 +16,7 @@ const PRIORITIES: { value: Task['priority']; label: string; color: string }[] = 
 ];
 
 export function AddTaskModal({ open, onClose }: AddTaskModalProps) {
-  const addTask = useTaskStore(s => s.addTask);
+  const { addTask } = useTaskStore();
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<Task['priority']>('medium');
   const [category, setCategory] = useState('');

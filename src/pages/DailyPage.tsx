@@ -1,8 +1,9 @@
-import { CalendarDays, CheckCircle2, TrendingUp, Bell } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarDays, CheckCircle2, TrendingUp, Bell, AlertTriangle, WifiOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { LoadingButton } from '../components/ui/LoadingButton';
 import type { ProgramState } from '../data/initialData';
-import { getWorkoutQuota } from '../data/initialData';
+import { isDayValid } from '../utils/helpers';
+import { SyncManager } from '../utils/syncManager';
 import { NumberField } from '../components/ui/NumberField';
 import { ToggleCard } from '../components/ui/ToggleCard';
 import { TextareaCard } from '../components/ui/TextareaCard';
@@ -15,8 +16,18 @@ interface DailyPageProps {
 
 export function DailyPage({ state, onUpdateState, onValidateDay }: DailyPageProps) {
   const [validating, setValidating] = useState(false);
+  const [syncWarning, setSyncWarning] = useState(false);
+  const dayHasInput = isDayValid(state);
+
+  useEffect(() => {
+    const check = () => setSyncWarning(SyncManager.hasPendingSync());
+    check();
+    const id = setInterval(check, 10000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleValidate = () => {
+    if (!dayHasInput) return;
     setValidating(true);
     onValidateDay();
     setTimeout(() => setValidating(false), 800);
@@ -76,9 +87,21 @@ export function DailyPage({ state, onUpdateState, onValidateDay }: DailyPageProp
               Les valeurs se synchronisent localement puis vers InsForge.
             </p>
           </div>
-          <LoadingButton onClick={handleValidate} loading={validating} icon={CheckCircle2}>
-            Valider J{state.currentDay}
-          </LoadingButton>
+          <div className="flex flex-col items-end gap-2">
+            <LoadingButton onClick={handleValidate} loading={validating} icon={CheckCircle2} disabled={!dayHasInput}>
+              Valider J{state.currentDay}
+            </LoadingButton>
+            {!dayHasInput && (
+              <span className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
+                <AlertTriangle className="h-3 w-3" /> Remplis au moins un champ pour valider
+              </span>
+            )}
+            {syncWarning && (
+              <span className="flex items-center gap-1 text-[11px] text-[var(--warning)]">
+                <WifiOff className="h-3 w-3" /> Sync cloud en attente — données sauvegardées localement
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
