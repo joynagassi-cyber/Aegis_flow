@@ -12,17 +12,45 @@ export const PROVIDERS: Record<ProviderName, AIProvider> = {
   Fireworks: { name: 'Fireworks', endpoint: 'https://api.fireworks.ai/inference/v1/chat/completions' },
 };
 
+interface ProviderConfig {
+  url: string;
+  key: string;
+  model: string;
+}
+
+function loadConfig(provider: string): ProviderConfig {
+  const key = provider.toUpperCase();
+  return {
+    url: localStorage.getItem(`API_URL_${key}`) || PROVIDERS[provider as ProviderName]?.endpoint || '',
+    key: localStorage.getItem(`API_KEY_${key}`) || '',
+    model: localStorage.getItem(`API_MODEL_${key}`) || '',
+  };
+}
+
+const DEFAULT_MODELS: Record<string, string> = {
+  GEMINI: 'gemini-pro',
+  DEEPSEEK: 'deepseek-v4-flash',
+  OPENROUTER: 'openai/gpt-4o',
+  FIREWORKS: 'accounts/fireworks/models/llama-v3p1-8b-instruct',
+};
+
 export class AIClient {
   private endpoint: string;
   private apiKey: string;
+  private model: string;
+  private providerName: string;
 
   constructor(providerName: string) {
-    this.endpoint = localStorage.getItem(`API_URL_${providerName.toUpperCase()}`) || '';
-    this.apiKey = localStorage.getItem(`API_KEY_${providerName.toUpperCase()}`) || '';
+    this.providerName = providerName.toUpperCase();
+    const config = loadConfig(providerName);
+    this.endpoint = config.url;
+    this.apiKey = config.key;
+    this.model = config.model || DEFAULT_MODELS[this.providerName] || '';
   }
 
   async generate(prompt: string): Promise<string> {
-    if (!this.endpoint || !this.apiKey) throw new Error(`Configuration incomplète pour le provider.`);
+    if (!this.endpoint) throw new Error(`URL non configurée pour ${this.providerName}.`);
+    if (!this.apiKey) throw new Error(`Clé API manquante pour ${this.providerName}.`);
 
     const response = await fetch(this.endpoint, {
       method: 'POST',
@@ -31,42 +59,37 @@ export class AIClient {
         'Authorization': `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(this.formatPayload(prompt)),
+      signal: AbortSignal.timeout(30000),
     });
+
+    if (!response.ok) {
+      const err = await response.text().catch(() => '');
+      throw new Error(`${this.providerName} error ${response.status}: ${err}`);
+    }
 
     const data = await response.json();
     return this.extractResponse(data);
   }
 
   private formatPayload(prompt: string) {
-    const isGemini = this.endpoint.includes('googleapis.com');
-
-    if (isGemini) {
-      return {
-        contents: [{ parts: [{ text: prompt }] }],
-      };
+    if (this.endpoint.includes('googleapis.com')) {
+      return { contents: [{ parts: [{ text: prompt }] }] };
     }
-
     return {
-      model: this.getModelName(),
+      model: this.model,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2048,
     };
   }
 
-  private getModelName(): string {
-    if (this.endpoint.includes('deepseek.com')) return 'deepseek-chat';
-    if (this.endpoint.includes('openrouter.ai')) return 'openai/gpt-4o';
-    if (this.endpoint.includes('fireworks.ai')) return 'accounts/fireworks/models/llama-v3p1-8b-instruct';
-    return 'gemini-pro';
-  }
-
   private extractResponse(data: any): string {
-    if (data.candidates) {
-      return data.candidates[0].content.parts[0].text;
-    }
-    if (data.choices && data.choices.length > 0) {
-      return data.choices[0].message?.content || '';
-    }
-    throw new Error('Format de réponse IA non reconnu');
+    if (data.candidates) return data.candidates[0].content.parts[0].text;
+    if (data.choices?.[0]?.message?.content) return data.choices[0].message.content;
+    throw new Error(`Format de réponse non reconnu pour ${this.providerName}`);
   }
+}
+
+export async function testConnection(provider: string): Promise<string> {
+  const client = new AIClient(provider);
+  return client.generate('Réponds uniquement "ok" si tu reçois ce message.');
 }

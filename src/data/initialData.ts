@@ -169,6 +169,8 @@ export interface ProgramState {
   userName: string;
   userBio: string;
   userPhoto: string;
+  profilePhotoKey: string;
+  sidebarCollapsed: boolean;
   geoaiRoadmap: GeoAIRoadmap;
   dailyChecklist: {
     prayer: boolean;
@@ -234,8 +236,8 @@ const getDefaultMenage = (): MenageData => ({
 
 export const RECOMMENDED_BOOKS: Book[] = [
   // SIG & Télédétection
-  { id: 'rec_1', title: 'Geographic Information Systems and Science', author: 'Paul A. Longley', status: 'à lire', category: 'SIG', rating: 10, summary: 'La référence absolue pour comprendre les SIG modernes.', keyPoints: ['Spatial Analysis', 'Data Models', 'GIS Science'], coverColor: '#0066FF' },
-  { id: 'rec_2', title: 'Remote Sensing and Image Interpretation', author: 'Thomas M. Lillesand', status: 'à lire', category: 'Télédétection', rating: 10, summary: 'Fondamentaux de la télédétection et de l\'interprétation d\'images.', keyPoints: ['Spectral Signatures', 'Satellite Imagery', 'Photogrammetry'], coverColor: '#00B4FF' },
+  { id: 'rec_1', title: 'Geographic Information Systems and Science', author: 'Paul A. Longley', status: 'à lire', category: 'SIG', rating: 10, summary: 'La référence absolue pour comprendre les SIG modernes.', keyPoints: ['Spatial Analysis', 'Data Models', 'GIS Science'], coverColor: '#0066FF', coverImage: 'https://images.unsplash.com/photo-1583321500900-82882e8e2ae4?w=400&q=90&fit=crop' },
+  { id: 'rec_2', title: 'Remote Sensing and Image Interpretation', author: 'Thomas M. Lillesand', status: 'à lire', category: 'Télédétection', rating: 10, summary: 'Fondamentaux de la télédétection et de l\'interprétation d\'images.', keyPoints: ['Spectral Signatures', 'Satellite Imagery', 'Photogrammetry'], coverColor: '#00B4FF', coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=90&fit=crop' },
   { id: 'rec_3', title: 'QGIS for Hydrological Applications', author: 'Hans van der Kwast', status: 'à lire', category: 'SIG', rating: 9, summary: 'Application pratique des SIG open source.', keyPoints: ['QGIS', 'Hydrology', 'Open Source'], coverColor: '#00C4B4' },
   
   // Urbanisme
@@ -243,12 +245,12 @@ export const RECOMMENDED_BOOKS: Book[] = [
   { id: 'rec_5', title: 'Urbanisme', author: 'Le Corbusier', status: 'à lire', category: 'Urbanisme', rating: 9, summary: 'Les principes fondamentaux de l\'architecture et de la ville.', keyPoints: ['Fonctionnalisme', 'Ville radieuse', 'Architecture'], coverColor: '#4D9FFF' },
   
   // Mindset & Développement Personnel
-  { id: 'rec_6', title: 'Mindset: The New Psychology of Success', author: 'Carol S. Dweck', status: 'à lire', category: 'Mindset', rating: 10, summary: 'Fixed vs Growth Mindset.', keyPoints: ['Growth Mindset', 'Learning', 'Resilience'], coverColor: '#FFD700' },
-  { id: 'rec_7', title: 'Can\'t Hurt Me', author: 'David Goggins', status: 'à lire', category: 'Mindset', rating: 10, summary: 'Dépassement de soi et discipline extrême.', keyPoints: ['Callous Your Mind', '40% Rule', 'Discipline'], coverColor: '#000000' },
+  { id: 'rec_6', title: 'Mindset: The New Psychology of Success', author: 'Carol S. Dweck', status: 'à lire', category: 'Mindset', rating: 10, summary: 'Fixed vs Growth Mindset.', keyPoints: ['Growth Mindset', 'Learning', 'Resilience'], coverColor: '#FFD700', coverImage: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&q=90&fit=crop' },
+  { id: 'rec_7', title: 'Can\'t Hurt Me', author: 'David Goggins', status: 'à lire', category: 'Mindset', rating: 10, summary: 'Dépassement de soi et discipline extrême.', keyPoints: ['Callous Your Mind', '40% Rule', 'Discipline'], coverColor: '#000000', coverImage: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=90&fit=crop' },
   { id: 'rec_8', title: 'Les 48 lois du pouvoir', author: 'Robert Greene', status: 'à lire', category: 'Développement personnel', rating: 9, summary: 'Stratégies de pouvoir et de manipulation.', keyPoints: ['Power', 'Strategy', 'Human Nature'], coverColor: '#8B0000' },
   
   // Prise de parole & Vente
-  { id: 'rec_9', title: 'Talk Like TED', author: 'Carmine Gallo', status: 'à lire', category: 'Prise de parole', rating: 9, summary: 'Les secrets des présentations publiques les plus inspirantes.', keyPoints: ['Storytelling', 'Passion', 'Practice'], coverColor: '#FF6600' },
+  { id: 'rec_9', title: 'Talk Like TED', author: 'Carmine Gallo', status: 'à lire', category: 'Prise de parole', rating: 9, summary: 'Les secrets des présentations publiques les plus inspirantes.', keyPoints: ['Storytelling', 'Passion', 'Practice'], coverColor: '#FF6600', coverImage: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&q=90&fit=crop' },
   { id: 'rec_10', title: 'Never Split the Difference', author: 'Chris Voss', status: 'à lire', category: 'Vente', rating: 10, summary: 'Négociation de haut niveau par un ancien du FBI.', keyPoints: ['Tactical Empathy', 'Mirroring', 'Labeling'], coverColor: '#003380' },
   { id: 'rec_11', title: 'Influence et Manipulation', author: 'Robert Cialdini', status: 'à lire', category: 'Vente', rating: 10, summary: 'La psychologie de la persuasion.', keyPoints: ['Réciprocité', 'Preuve sociale', 'Rareté'], coverColor: '#00C4B4' },
   
@@ -257,12 +259,12 @@ export const RECOMMENDED_BOOKS: Book[] = [
   { id: 'rec_13', title: 'Good to Great', author: 'Jim Collins', status: 'à lire', category: 'Gestion d\'entreprise', rating: 9, summary: 'Pourquoi certaines entreprises font le saut et d\'autres non.', keyPoints: ['Level 5 Leadership', 'Hedgehog Concept', 'Flywheel'], coverColor: '#FFD600' },
   
   // Startup & Tech
-  { id: 'rec_14', title: 'The Lean Startup', author: 'Eric Ries', status: 'à lire', category: 'Création de startup', rating: 9, summary: 'Comment les entrepreneurs d\'aujourd\'hui utilisent l\'innovation continue.', keyPoints: ['MVP', 'Pivot', 'Mesure'], coverColor: '#FF4D6A' },
+  { id: 'rec_14', title: 'The Lean Startup', author: 'Eric Ries', status: 'à lire', category: 'Création de startup', rating: 9, summary: 'Comment les entrepreneurs d\'aujourd\'hui utilisent l\'innovation continue.', keyPoints: ['MVP', 'Pivot', 'Mesure'], coverColor: '#FF4D6A', coverImage: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=90&fit=crop' },
   { id: 'rec_15', title: 'Zero to One', author: 'Peter Thiel', status: 'à lire', category: 'Création de startup', rating: 9, summary: 'Notes sur les startups, ou comment construire le futur.', keyPoints: ['Monopole', 'Innovation', 'Secret'], coverColor: '#4D9FFF' },
   { id: 'rec_16', title: 'The Hard Thing About Hard Things', author: 'Ben Horowitz', status: 'à lire', category: 'Gestion d\'entreprise', rating: 10, summary: 'Construire une entreprise quand tout va mal.', keyPoints: ['Wartime CEO', 'Culture', 'Hard Choices'], coverColor: '#111111' },
   
   // Culture Générale & Littérature
-  { id: 'rec_17', title: 'Sapiens: A Brief History of Humankind', author: 'Yuval Noah Harari', status: 'à lire', category: 'Culture générale', rating: 10, summary: 'Une histoire de l\'humanité.', keyPoints: ['Cognitive Revolution', 'Agricultural Revolution', 'Science'], coverColor: '#FFD700' },
+  { id: 'rec_17', title: 'Sapiens: A Brief History of Humankind', author: 'Yuval Noah Harari', status: 'à lire', category: 'Culture générale', rating: 10, summary: 'Une histoire de l\'humanité.', keyPoints: ['Cognitive Revolution', 'Agricultural Revolution', 'Science'], coverColor: '#FFD700', coverImage: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400&q=90&fit=crop' },
   { id: 'rec_18', title: 'Les Misérables', author: 'Victor Hugo', status: 'à lire', category: 'Littérature sociale', rating: 10, summary: 'Chef-d\'œuvre de la littérature sociale française.', keyPoints: ['Justice', 'Rédemption', 'Société'], coverColor: '#003380' },
   { id: 'rec_19', title: '1984', author: 'George Orwell', status: 'à lire', category: 'Culture générale', rating: 10, summary: 'Dystopie sur le totalitarisme et la surveillance.', keyPoints: ['Big Brother', 'Thought Police', 'Freedom'], coverColor: '#FF0000' },
   { id: 'rec_20', title: 'La Bible', author: 'Dieu', status: 'à lire', category: 'Spirituel', rating: 10, summary: 'La parole de Dieu, fondement de la foi et de la sagesse.', keyPoints: ['Foi', 'Amour', 'Sagesse'], coverColor: '#FFFFFF' },
@@ -292,6 +294,8 @@ export const getInitialState = (): ProgramState => {
     userName: 'Commander VIP',
     userBio: 'Fondateur & CEO • Focus extrême sur la construction d\'un monopole SaaS à 100 000 clients payants.',
     userPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=90&fit=crop',
+    profilePhotoKey: '',
+    sidebarCollapsed: false,
     geoaiRoadmap: GEOAI_ROADMAP,
     dailyChecklist: {
       prayer: false,

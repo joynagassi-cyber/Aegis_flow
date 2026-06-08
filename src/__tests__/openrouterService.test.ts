@@ -6,12 +6,12 @@ describe('openrouterService', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('openrouter_api_key', fakeKey);
+    localStorage.setItem('API_KEY_OPENROUTER', fakeKey);
   });
 
   it('throws if API key is missing', async () => {
-    localStorage.removeItem('openrouter_api_key');
-    await expect(callOpenRouter('test')).rejects.toThrow('OpenRouter API key not set');
+    localStorage.removeItem('API_KEY_OPENROUTER');
+    await expect(callOpenRouter('test')).rejects.toThrow('Clé API OpenRouter manquante');
   });
 
   it('calls fetch with correct payload and returns content', async () => {

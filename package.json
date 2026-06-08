@@ -13,7 +13,10 @@
     "test": "vitest run --config vitest.config.js"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.68",
     "@insforge/sdk": "^1.2.10",
+    "ai": "^6.0.197",
+    "bashkit": "^0.7.1",
     "clsx": "2.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -23,10 +26,14 @@
     "pg": "^8.14.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
     "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
     "simple-statistics": "^7.8.9",
     "tailwind-merge": "3.4.0",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.17",
@@ -34,8 +41,10 @@
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",
     "@types/node": "22.19.17",
+    "@types/pg": "^8.20.0",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
     "@typescript-eslint/parser": "^8.60.0",
     "@vitejs/plugin-react": "5.1.1",

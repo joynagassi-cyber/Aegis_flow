@@ -36,3 +36,21 @@ yarn-error.log*
 .graphify_python
 graphify-out
 .gitnexus
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
+
+# Agent workspace (created dynamically)
+workspace/

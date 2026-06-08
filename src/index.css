@@ -118,6 +118,92 @@ body {
 }
 
 /* ==========================================
+   GLASSMORPHISM CARDS — VERRE DÉPOLI
+   ========================================== */
+.card-glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 102, 255, 0.08);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="light"] .card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 102, 255, 0.06);
+}
+
+.card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.card-glass:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 102, 255, 0.25);
+  box-shadow: 0 12px 48px rgba(0, 102, 255, 0.15);
+}
+
+[data-theme="light"] .card-glass:hover {
+  border-color: rgba(0, 102, 255, 0.3);
+  box-shadow: 0 12px 48px rgba(0, 102, 255, 0.12);
+}
+
+.card-glass-small {
+  border-radius: 16px !important;
+  padding: 16px 20px !important;
+}
+
+.card-glass-blue {
+  background: rgba(0, 102, 255, 0.06);
+  border-color: rgba(0, 102, 255, 0.15);
+}
+
+[data-theme="light"] .card-glass-blue {
+  background: rgba(0, 102, 255, 0.04);
+  border-color: rgba(0, 102, 255, 0.12);
+}
+
+/* ==========================================
+   STAGGER GRID ENTRY ANIMATION
+   ========================================== */
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.card-stagger {
+  animation: card-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.card-stagger:nth-child(1) { animation-delay: 0ms; }
+.card-stagger:nth-child(2) { animation-delay: 60ms; }
+.card-stagger:nth-child(3) { animation-delay: 120ms; }
+.card-stagger:nth-child(4) { animation-delay: 180ms; }
+.card-stagger:nth-child(5) { animation-delay: 240ms; }
+.card-stagger:nth-child(6) { animation-delay: 300ms; }
+.card-stagger:nth-child(7) { animation-delay: 360ms; }
+.card-stagger:nth-child(8) { animation-delay: 420ms; }
+.card-stagger:nth-child(9) { animation-delay: 480ms; }
+.card-stagger:nth-child(10) { animation-delay: 540ms; }
+.card-stagger:nth-child(11) { animation-delay: 600ms; }
+.card-stagger:nth-child(12) { animation-delay: 660ms; }
+
+/* ==========================================
    UI ELEMENTS
    ========================================== */
 /* Bouton Primaire — Electric Blue */
@@ -339,4 +425,134 @@ body {
 [data-theme="light"] .checkbox-custom.checked {
   background: var(--primary);
   border-color: var(--primary);
+}
+
+/* ==========================================
+   SIDEBAR
+   ========================================== */
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-3) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 4px;
+}
+
+/* ==========================================
+   PAGE TRANSITIONS
+   ========================================== */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================
+   NOTIFICATION TOAST
+   ========================================== */
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* ==========================================
+   DASHBOARD MAIN CONTENT OFFSET
+   ========================================== */
+.dashboard-main {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   BUTTON LOADING SPINNER
+   ========================================== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ==========================================
+   SYNC PROGRESS BAR (NProgress-style)
+   ========================================== */
+@keyframes sync-bar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.sync-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  height: 2px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sync-progress-bar {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #0066FF, #00B4FF, #00E676);
+  animation: sync-bar 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==========================================
+   POMODORO SOUND NOTIFICATION
+   ========================================== */
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* ==========================================
+   SIDEBAR — MOBILE OVERLAY
+   ========================================== */
+@media (min-width: 768px) {
+  .sidebar {
+    position: fixed;
+    z-index: 40;
+  }
 }
