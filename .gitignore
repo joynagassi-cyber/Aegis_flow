@@ -46,11 +46,14 @@ graphify-out
 .cline
 .github/copilot*
 .kilocode
+.kiro
+.opencode
 .qoder
 .qwen
 .roo
 .trae
 .windsurf
+_bmad
 
 # Agent workspace (created dynamically)
 workspace/

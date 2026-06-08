@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { File, Folder, FolderOpen, FileText, FileJson, FileCode, ChevronRight, RefreshCw } from 'lucide-react';
+import { File, Folder, FileText, FileJson, FileCode, ChevronRight, RefreshCw } from 'lucide-react';
 import { apiUrl } from '../services/apiConfig';
 
 interface FileEntry {

@@ -9,6 +9,7 @@ import geoRouter from './routes/geo.js';
 import aiRouter from './routes/ai.js';
 import agentRouter from './routes/agent.js';
 import artifactsRouter from './routes/artifacts.js';
+import chatRouter from './routes/chat.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env') });
@@ -23,5 +24,6 @@ app.use('/api/geo', geoRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/agent', agentRouter);
 app.use('/api/artifacts', artifactsRouter);
+app.use('/api/chat', chatRouter);
 
 export default app;

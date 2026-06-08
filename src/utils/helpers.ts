@@ -27,11 +27,29 @@ export const emptyDailyInput = (): ProgramState['currentDayInput'] => ({
   nutrition: { mealsCount: 0, waterGlasses: 0, qualityScore: 0 },
 });
 
+export const isDayValid = (state: ProgramState): boolean => {
+  const input = state.currentDayInput;
+  return (
+    input.prayerHours > 0 ||
+    input.bibleChapters > 0 ||
+    input.englishMinutes > 0 ||
+    input.techTasksCount > 0 ||
+    input.sport.pushups > 0 ||
+    input.sport.crunches > 0 ||
+    input.sport.squats > 0 ||
+    input.pitchConfidence > 0 ||
+    input.marketingActions.trim() !== '' ||
+    input.fasting ||
+    state.dailyChecklist.reading
+  );
+};
+
 export const buildValidatedDay = (state: ProgramState): DayData => {
   const current = state.currentDayInput;
   const readingCompleted = state.dailyChecklist.reading;
-  const sportQuotaMet =
-    current.sport.pushups >= getWorkoutQuota(state.currentDay, 'pushups');
+  const pushupsMet = current.sport.pushups >= getWorkoutQuota(state.currentDay, 'pushups');
+  const crunchesMet = current.sport.crunches >= getWorkoutQuota(state.currentDay, 'crunches');
+  const squatsMet = current.sport.squats >= getWorkoutQuota(state.currentDay, 'squats');
 
   return {
     dayNumber: state.currentDay,
@@ -71,7 +89,8 @@ export const buildValidatedDay = (state: ProgramState): DayData => {
     menage: current.menage,
     sleep: current.sleep,
     nutrition: current.nutrition,
-    validated: sportQuotaMet || readingCompleted || current.englishMinutes > 0,
+    validated: pushupsMet || crunchesMet || squatsMet || readingCompleted || current.englishMinutes > 0,
+    checklist: { ...state.dailyChecklist },
   };
 };
 

@@ -1,25 +1,12 @@
-import { useEffect, useMemo, useState, type ElementType } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  BarChart3,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  Clock,
-  LayoutDashboard,
   LogOut,
   Moon,
-  Rocket,
-  Settings2,
-  Sparkles,
   Sun,
-  Target,
-  Timer,
   Wifi,
   WifiOff,
   Menu,
-  Bell,
 } from 'lucide-react';
-import { AuthModal } from './components/AuthModal';
 import { Journal } from './components/Journal';
 import { type StatCard } from './components/StatsPanel';
 import { authService } from './services/authService';
@@ -29,6 +16,7 @@ import { COMMAND_QUOTES } from './utils/quotes';
 import { type Book, getInitialState, getWorkoutQuota, type ProgramState } from './data/initialData';
 import { formatNumber, toPercent, emptyDailyInput, buildValidatedDay, hydrateState } from './utils/helpers';
 import { OverviewPage } from './pages/OverviewPage';
+import { SaaSObjectivesPage } from './pages/SaaSObjectivesPage';
 import { DailyPage } from './pages/DailyPage';
 import { TasksPage } from './pages/TasksPage';
 import { BooksPage } from './pages/BooksPage';
@@ -108,18 +96,28 @@ export default function App() {
   useEffect(() => { hydrateAuth(); }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const quoteInterval = setInterval(() => {
       setQuoteIndex(prev => (prev + 1) % COMMAND_QUOTES.length);
     }, 300000);
 
-    const onOnline = () => setSyncState('online');
+    const syncInterval = setInterval(() => {
+      if (SyncManager.hasPendingSync()) {
+        void SyncManager.retryPending();
+      }
+    }, 30000);
+
+    const onOnline = () => {
+      setSyncState('online');
+      void SyncManager.retryPending();
+    };
     const onOffline = () => setSyncState('offline');
 
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(quoteInterval);
+      clearInterval(syncInterval);
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
@@ -196,33 +194,42 @@ export default function App() {
 
   const handleValidateDay = () => {
     const validatedDay = buildValidatedDay(state);
-    setState(prev => {
-      const nextDay = validatedDay.dayNumber + 1;
-      const englishCompleted = validatedDay.english.completed;
-      const sportCompleted =
-        validatedDay.sport.pushups >= getWorkoutQuota(prev.currentDay, 'pushups') &&
-        validatedDay.sport.crunches >= getWorkoutQuota(prev.currentDay, 'crunches') &&
-        validatedDay.sport.squats >= getWorkoutQuota(prev.currentDay, 'squats');
-      return {
-        ...prev,
-        currentDay: nextDay,
-        days: [validatedDay, ...prev.days].slice(0, 210),
-        payingCustomers: prev.payingCustomers + validatedDay.tech.payingCustomersDelta,
-        mrr: prev.mrr + validatedDay.tech.payingCustomersDelta * 99,
-        featuresDelivered: prev.featuresDelivered + validatedDay.tech.tasksCompleted,
-        englishLevel: prev.englishLevel + (englishCompleted ? 1 : 0),
-        englishStreak: englishCompleted ? prev.englishStreak + 1 : 0,
-        sportStreak: sportCompleted ? prev.sportStreak + 1 : 0,
-        currentSaaSPhase:
-          nextDay <= 30 ? 'Idéation' : nextDay <= 90 ? 'MVP' : nextDay <= 150 ? 'Beta' : nextDay <= 180 ? 'Lancement' : 'Scale',
-        dailyChecklist: getInitialState().dailyChecklist,
-        currentDayInput: emptyDailyInput(),
-      };
-    });
+    const nextDay = validatedDay.dayNumber + 1;
+    const englishCompleted = validatedDay.english.completed;
+    const sportCompleted =
+      validatedDay.sport.pushups >= getWorkoutQuota(state.currentDay, 'pushups') &&
+      validatedDay.sport.crunches >= getWorkoutQuota(state.currentDay, 'crunches') &&
+      validatedDay.sport.squats >= getWorkoutQuota(state.currentDay, 'squats');
+    const nextState: ProgramState = {
+      ...state,
+      currentDay: nextDay,
+      days: [validatedDay, ...state.days].slice(0, 210),
+      payingCustomers: state.payingCustomers + validatedDay.tech.payingCustomersDelta,
+      mrr: state.mrr + validatedDay.tech.payingCustomersDelta * 99,
+      featuresDelivered: state.featuresDelivered + validatedDay.tech.tasksCompleted,
+      englishLevel: state.englishLevel + (englishCompleted ? 1 : 0),
+      englishStreak: englishCompleted ? state.englishStreak + 1 : 0,
+      sportStreak: sportCompleted ? state.sportStreak + 1 : 0,
+      currentSaaSPhase:
+        nextDay <= 30 ? 'MVP' : nextDay <= 60 ? 'Développement' : nextDay <= 90 ? 'Premier Paiement' : nextDay <= 120 ? 'Lancement' : 'Itérations',
+      dailyChecklist: getInitialState().dailyChecklist,
+      currentDayInput: emptyDailyInput(),
+    };
+    SyncManager.flushState(nextState);
+    setState(nextState);
     notify(`Jour J${state.currentDay} validé`, 'Le quotidien a été archivé.', 'success');
   };
 
   const handleAddBook = (book: Book) => {
+    const existing = state.books.find(entry => entry.id === book.id);
+    if (existing) {
+      setState(prev => ({
+        ...prev,
+        books: prev.books.map(b => b.id === book.id ? { ...book } : b),
+      }));
+      notify('Livre modifié', `${book.title} a été mis à jour.`, 'success');
+      return;
+    }
     const alreadyExists = state.books.some(
       entry => entry.title === book.title && entry.author === book.author,
     );
@@ -272,6 +279,8 @@ export default function App() {
     switch (activeTab) {
       case 'overview':
         return <OverviewPage key={key} state={state} currentQuote={currentQuote} />;
+      case 'objectives':
+        return <SaaSObjectivesPage key={key} state={state} />;
       case 'daily':
         return <DailyPage key={key} state={state} onUpdateState={setState} onValidateDay={handleValidateDay} />;
       case 'tasks':

@@ -68,7 +68,7 @@ export function CoachWidget({ state }: CoachWidgetProps) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1" style={{ background: colors.bg }}>
               <Icon className="h-3.5 w-3.5" />
-              <span className="text-xs font-bold" style={{ color: colors.icon === TrendingUp ? '#00E676' : colors.icon === TrendingDown ? '#FF1744' : '#FFD600' }}>
+              <span className="text-xs font-bold" style={{ color: insight.severity === 'positive' ? '#00E676' : insight.severity === 'critical' ? '#FF1744' : '#FFD600' }}>
                 {insight.severity === 'positive' ? 'Positif' : insight.severity === 'warning' ? 'Attention' : 'Critique'}
               </span>
             </div>

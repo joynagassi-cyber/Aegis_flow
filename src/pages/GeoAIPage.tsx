@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BookOpen, CheckCircle2, Clock, MapPin, Target, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Target, TrendingUp } from 'lucide-react';
 import { GEOAI_ROADMAP } from '../data/geoaiRoadmap';
 import { toPercent } from '../utils/helpers';
 
@@ -13,7 +13,7 @@ export function GeoAIPage() {
       total,
       progress: toPercent(done.length, total),
       currentMonth: GEOAI_ROADMAP.mois.find(m =>
-        m.semaines.some(w => w.statut === 'en_cours' || w.statut === 'a_venir'),
+        m.semaines.some(w => w.statut === 'en_cours'),
       ),
       totalWeeks: total,
     };

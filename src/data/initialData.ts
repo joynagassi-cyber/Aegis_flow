@@ -122,6 +122,7 @@ export interface DayData {
   sleep: SleepData;
   nutrition: NutritionData;
   validated: boolean;
+  checklist?: DailyChecklist;
 }
 
 export interface Book {
@@ -156,6 +157,17 @@ export interface ProjectLog {
   tag: 'milestone' | 'release' | 'insight' | 'kpi';
 }
 
+export interface DailyChecklist {
+  prayer: boolean;
+  bible: boolean;
+  fasting: boolean;
+  reading: boolean;
+  english: boolean;
+  techTask: boolean;
+  marketingAction: boolean;
+  geoaiTask: boolean;
+}
+
 export interface ProgramState {
   currentDay: number;
   startDate: string;
@@ -165,23 +177,14 @@ export interface ProgramState {
   payingCustomers: number;
   mrr: number;
   featuresDelivered: number;
-  currentSaaSPhase: 'Idéation' | 'MVP' | 'Beta' | 'Lancement' | 'Scale';
+  currentSaaSPhase: 'MVP' | 'Développement' | 'Premier Paiement' | 'Lancement' | 'Itérations';
   userName: string;
   userBio: string;
   userPhoto: string;
   profilePhotoKey: string;
   sidebarCollapsed: boolean;
   geoaiRoadmap: GeoAIRoadmap;
-  dailyChecklist: {
-    prayer: boolean;
-    bible: boolean;
-    fasting: boolean;
-    reading: boolean;
-    english: boolean;
-    techTask: boolean;
-    marketingAction: boolean;
-    geoaiTask: boolean;
-  };
+  dailyChecklist: DailyChecklist;
   currentDayInput: {
     prayerHours: number;
     bibleChapters: number;
@@ -290,7 +293,7 @@ export const getInitialState = (): ProgramState => {
     payingCustomers: 0,
     mrr: 0,
     featuresDelivered: 0,
-    currentSaaSPhase: 'Idéation',
+    currentSaaSPhase: 'MVP',
     userName: 'Commander VIP',
     userBio: 'Fondateur & CEO • Focus extrême sur la construction d\'un monopole SaaS à 100 000 clients payants.',
     userPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=90&fit=crop',

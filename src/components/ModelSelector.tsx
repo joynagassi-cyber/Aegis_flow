@@ -25,7 +25,7 @@ const API_ROUTES: Record<string, { url: string | ((key: string) => string); pars
     parser: (data) => (data.data || []).map((m: any) => ({ id: m.id, name: m.name || m.id })),
   },
   FIREWORKS: {
-    url: (key: string) => 'https://api.fireworks.ai/inference/v1/models',
+    url: (_key: string) => 'https://api.fireworks.ai/inference/v1/models',
     parser: (data) => (data.data || []).map((m: any) => ({ id: m.id, name: m.id.split('/').pop() || m.id })),
   },
   DEEPSEEK: {

@@ -1,5 +1,6 @@
 import type { ProgramState, DayData } from '../data/initialData';
 import { generateId } from './chatService';
+import { AIClient } from './aiClient';
 
 export interface DailyBrief {
   id: string;
@@ -21,27 +22,23 @@ export interface CoachInsight {
   severity: 'positive' | 'warning' | 'critical';
 }
 
-function loadConfig() {
-  return {
-    apiKey: localStorage.getItem('API_KEY_OPENROUTER') || '',
-    apiUrl: localStorage.getItem('API_URL_OPENROUTER') || 'https://openrouter.ai/api/v1/chat/completions',
-    model: localStorage.getItem('API_MODEL_OPENROUTER') || 'openai/gpt-4o-mini',
-  };
+const PROVIDER_PREFERENCE = ['OPENROUTER', 'GEMINI', 'DEEPSEEK', 'FIREWORKS'];
+
+function findFirstConfiguredProvider(): string | null {
+  for (const p of PROVIDER_PREFERENCE) {
+    if (localStorage.getItem(`API_KEY_${p}`)) return p;
+  }
+  return null;
 }
 
 async function callAI(system: string, user: string): Promise<string> {
-  const { apiKey, apiUrl, model } = loadConfig();
-  if (!apiKey) return '';
+  const provider = findFirstConfiguredProvider();
+  if (!provider) return '';
 
   try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: 600, temperature: 0.7 }),
-    });
-    if (!response.ok) return '';
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || '';
+    const client = new AIClient(provider);
+    const prompt = `${system}\n\n${user}`;
+    return await client.generate(prompt);
   } catch {
     return '';
   }

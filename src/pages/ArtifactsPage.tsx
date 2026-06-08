@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FileText, FileJson, FileCode, Table, FileType, Trash2, Copy, Check, ExternalLink, Archive, Search, X, Globe, Clock, Hash, Layers } from 'lucide-react';
-import { listArtifacts, deleteArtifact, getArtifactTypes, getArtifactSessions, saveArtifact } from '../services/artifactService';
+import { FileText, FileJson, Table, FileType, Trash2, Copy, Check, Archive, Search, X, Globe, Hash, Layers } from 'lucide-react';
+import { listArtifacts, deleteArtifact, getArtifactTypes, getArtifactSessions } from '../services/artifactService';
 import type { ArtifactRecord, ArtifactTypeCount, ArtifactSession } from '../services/artifactService';
 
 const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
@@ -148,7 +148,7 @@ export function ArtifactsPage() {
               className={`card-glass-small flex items-center gap-3 p-3 transition ${
                 isActive ? 'ring-1' : ''
               }`}
-              style={isActive ? { ringColor: cfg.color } : undefined}
+              style={isActive ? { boxShadow: `0 0 0 1px ${cfg.color}` } : undefined}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: cfg.bg }}>
                 <Icon className="h-4 w-4" style={{ color: cfg.color }} />
