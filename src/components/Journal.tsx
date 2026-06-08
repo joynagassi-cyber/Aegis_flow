@@ -36,7 +36,7 @@ export function Journal() {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-      <form className="command-card space-y-4" onSubmit={handleCreate}>
+      <form className="card-glass space-y-4" onSubmit={handleCreate}>
         <div>
           <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
             Journal
@@ -87,7 +87,7 @@ export function Journal() {
 
       <div className="space-y-4">
         {activeEntry && (
-          <div className="command-card space-y-4 border-[var(--primary)]/30">
+          <div className="card-glass space-y-4 border-[var(--primary)]/30">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
@@ -127,7 +127,7 @@ export function Journal() {
 
         <div className="grid gap-4">
           {sortedEntries.length === 0 && (
-            <div className="command-card flex min-h-[260px] items-center justify-center text-center">
+            <div className="card-glass flex min-h-[260px] items-center justify-center text-center">
               <div>
                 <BookOpen className="mx-auto h-10 w-10 text-[var(--text-muted)]" />
                 <p className="mt-4 font-syne text-lg font-bold">Aucune entrée pour l’instant</p>
@@ -141,7 +141,7 @@ export function Journal() {
           {sortedEntries.map(entry => (
             <article
               key={entry.id}
-              className="command-card space-y-4 transition hover:-translate-y-0.5"
+              className="card-glass space-y-4 transition hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>

@@ -28,6 +28,28 @@ export function PomodoroTimer() {
     return () => clearInterval(interval);
   }, [isRunning, mode]);
 
+  const playBeep = () => {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch { /* Audio not supported */ }
+  };
+
+  const notify = (title: string, message: string) => {
+    playBeep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body: message });
+    }
+  };
+
   const handleTimerEnd = () => {
     setIsRunning(false);
     if (mode === 'focus') {
@@ -45,12 +67,6 @@ export function PomodoroTimer() {
       setMode('focus');
       setSecondsLeft(FOCUS_MINUTES * 60);
       notify('Pause terminée', 'Place au focus !');
-    }
-  };
-
-  const notify = (title: string, message: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body: message });
     }
   };
 
@@ -81,7 +97,7 @@ export function PomodoroTimer() {
   const totalFocusMinutes = pomodorosCompleted * FOCUS_MINUTES;
 
   return (
-    <div className="command-card space-y-6" onClick={requestNotificationPermission}>
+    <div className="card-glass space-y-6" onClick={requestNotificationPermission}>
       <div>
         <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
           Productivity Timer

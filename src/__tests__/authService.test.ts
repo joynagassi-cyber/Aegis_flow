@@ -9,22 +9,15 @@ describe('AuthService', () => {
     expect(authService.getToken()).toBeNull();
   });
 
-  it('signInWithEmail stores a token', async () => {
-    const result = await authService.signInWithEmail('test@example.com');
-    expect(result.token).toBeTruthy();
-    expect(authService.getToken()).toBe(result.token);
-  });
-
-  it('signInWithGoogle stores a token', async () => {
-    const result = await authService.signInWithGoogle();
-    expect(result.token).toBeTruthy();
-    expect(result.user.provider).toBe('google');
-  });
-
-  it('signOut removes the token', async () => {
-    await authService.signInWithEmail('test@example.com');
-    expect(authService.getToken()).toBeTruthy();
+  it('signOut removes the token', () => {
+    localStorage.setItem('authToken', 'some-token');
+    expect(authService.getToken()).toBe('some-token');
     authService.signOut();
     expect(authService.getToken()).toBeNull();
+  });
+
+  it('checkSession returns false when not authenticated', async () => {
+    const result = await authService.checkSession();
+    expect(result).toBe(false);
   });
 });

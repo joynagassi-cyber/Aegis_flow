@@ -26,8 +26,8 @@ export default defineConfig({
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "favicons/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "favicons/icon-512.png", sizes: "512x512", type: "image/png" },
+          { src: "favicons/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "favicons/android-chrome-512x512.png", sizes: "512x512", type: "image/png" },
         ],
       },
       workbox: {

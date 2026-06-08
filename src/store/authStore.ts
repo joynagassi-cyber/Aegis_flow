@@ -10,3 +10,8 @@ export const useAuthStore = createStore<AuthState>(set => ({
   isAuthenticated: !!authService.getToken(),
   setAuth: v => set({ isAuthenticated: v }),
 }));
+
+export const hydrateAuth = async () => {
+  const authed = await authService.checkSession();
+  useAuthStore.setState({ isAuthenticated: authed });
+};
