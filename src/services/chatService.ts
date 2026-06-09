@@ -1,3 +1,5 @@
+import { getApiBase } from './apiConfig';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -23,6 +25,63 @@ function loadConfig() {
 }
 
 export async function* streamChat(messages: { role: string; content: string }[]): AsyncGenerator<string> {
+  const { apiKey, model } = loadConfig();
+
+  const base = getApiBase();
+  try {
+    const res = await fetch(`${base}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, model, sessionId: localStorage.getItem('AEGIS_SESSION_ID') || '' }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Erreur ${res.status}: ${text}`);
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('text/event-stream')) {
+      const json = await res.json();
+      if (json.content) yield json.content;
+      return;
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('Stream non disponible');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'text' && parsed.content) {
+            yield parsed.content;
+          }
+        } catch { /* skip */ }
+      }
+    }
+  } catch (e) {
+    if (!apiKey) throw new Error('Clé API OpenRouter manquante — configure dans Réglages > IA');
+    throw e;
+  }
+}
+
+export async function* streamChatDirect(messages: { role: string; content: string }[]): AsyncGenerator<string> {
   const { apiKey, apiUrl, model } = loadConfig();
   if (!apiKey) throw new Error('Clé API OpenRouter manquante — configure dans Réglages > IA');
 

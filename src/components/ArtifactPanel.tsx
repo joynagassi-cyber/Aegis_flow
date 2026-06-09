@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { X, Download, Code, Eye, FileText } from 'lucide-react';
@@ -53,7 +55,11 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
         return <CsvTable data={artifact.content} />;
       case 'markdown':
       case 'md':
-        return <pre className="text-sm text-[var(--text)] whitespace-pre-wrap">{artifact.content}</pre>;
+        return (
+          <div className="prose prose-sm prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{artifact.content}</ReactMarkdown>
+          </div>
+        );
       default:
         return <pre className="text-sm text-[var(--text)] whitespace-pre-wrap">{artifact.content}</pre>;
     }
