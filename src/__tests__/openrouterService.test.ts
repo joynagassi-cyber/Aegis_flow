@@ -7,11 +7,12 @@ describe('openrouterService', () => {
   beforeEach(() => {
     localStorage.clear();
     localStorage.setItem('API_KEY_OPENROUTER', fakeKey);
+    localStorage.setItem('API_URL_OPENROUTER', 'https://openrouter.ai/api/v1/chat/completions');
   });
 
   it('throws if API key is missing', async () => {
     localStorage.removeItem('API_KEY_OPENROUTER');
-    await expect(callOpenRouter('test')).rejects.toThrow('Clé API OpenRouter manquante');
+    await expect(callOpenRouter('test')).rejects.toThrow('Clé API manquante pour OPENROUTER');
   });
 
   it('calls fetch with correct payload and returns content', async () => {

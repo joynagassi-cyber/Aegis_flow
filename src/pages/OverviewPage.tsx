@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Home, Rocket, Sparkles, Users, TrendingUp, TrendingDown, Minus, Target } from 'lucide-react';
+import { Home, Rocket, Sparkles, Users, TrendingUp, TrendingDown, Minus, Target, CalendarDays, MessageSquare } from 'lucide-react';
 import { type ProgramState, type Book, getWorkoutQuota } from '../data/initialData';
-import { StatsPanel, type StatCard } from '../components/StatsPanel';
+import { Logo } from '../components/Logo';
 import { DailyBriefCard } from '../components/DailyBriefCard';
+import { StatsPanel, type StatCard } from '../components/StatsPanel';
 import { CoachWidget } from '../components/CoachWidget';
 import { formatNumber, toPercent } from '../utils/helpers';
 
@@ -11,7 +12,7 @@ interface OverviewPageProps {
   currentQuote: { text: string; author: string };
 }
 
-export function OverviewPage({ state, currentQuote: _currentQuote }: OverviewPageProps) {
+export function OverviewPage({ state, currentQuote }: OverviewPageProps) {
   const finishedBooks = useMemo(
     () => state.books.filter((book: Book) => book.status === 'terminé').length,
     [state.books],
@@ -86,8 +87,59 @@ export function OverviewPage({ state, currentQuote: _currentQuote }: OverviewPag
     },
   ];
 
+  const quickActions = [
+    { label: 'Ma journée', icon: CalendarDays, tab: 'daily' as const, color: 'var(--primary)' },
+    { label: 'IA Chat', icon: MessageSquare, tab: 'chat' as const, color: 'var(--accent)' },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-[1400px] space-y-6">
+      {/* Header de la page d'accueil */}
+      <div className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-2)]/50 px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Logo size={36} />
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-muted)]">Aegis Flow</p>
+              <h1 className="font-syne text-xl font-bold">Command Center</h1>
+            </div>
+          </div>
+          <div className="hidden h-8 w-px bg-[var(--border)] sm:block" />
+          <div className="flex gap-3">
+            <div className="rounded-[10px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Jour</p>
+              <p className="font-mono-num text-sm font-bold">J{state.currentDay}</p>
+            </div>
+            <div className="rounded-[10px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-1.5">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Phase</p>
+              <p className="text-sm font-bold">{state.currentSaaSPhase}</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {quickActions.map(action => (
+            <a
+              key={action.tab}
+              href={`#${action.tab}`}
+              className="flex items-center gap-1.5 rounded-[10px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] transition hover:border-[var(--primary)]/30 hover:text-[var(--text)]"
+              onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: action.tab })); }}
+            >
+              <action.icon className="h-3.5 w-3.5" style={{ color: action.color }} />
+              {action.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* Citation */}
+      <div className="rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-3">
+        <p className="text-sm leading-7 text-[var(--text-muted)]">
+          <span className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-subtle)]">Citation · </span>
+          {currentQuote.text}
+          <span className="ml-2 text-xs text-[var(--text-subtle)]">— {currentQuote.author}</span>
+        </p>
+      </div>
+
       <DailyBriefCard state={state} />
 
       <section className="card-glass space-y-5">

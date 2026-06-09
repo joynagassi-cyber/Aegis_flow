@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FileText, FileJson, Table, FileType, Trash2, Copy, Check, Archive, Search, X, Globe, Hash, Layers } from 'lucide-react';
-import { listArtifacts, deleteArtifact, getArtifactTypes, getArtifactSessions } from '../services/artifactService';
+import { listArtifacts, deleteArtifact, getArtifactTypes, getArtifactSessions, searchArtifacts } from '../services/artifactService';
 import type { ArtifactRecord, ArtifactTypeCount, ArtifactSession } from '../services/artifactService';
 
 const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
@@ -111,12 +111,16 @@ export function ArtifactsPage() {
     setArtifacts(prev => prev.filter(a => a.id !== id));
   };
 
-  const filtered = searchQuery
-    ? artifacts.filter(a =>
-        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.content.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : artifacts;
+  useEffect(() => {
+    if (!searchQuery.trim()) { load(); return; }
+    const t = setTimeout(async () => {
+      const results = await searchArtifacts(searchQuery);
+      if (results) setArtifacts(results);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const filtered = artifacts;
 
   const totalCount = typeCounts.reduce((sum, t) => sum + t.count, 0);
 

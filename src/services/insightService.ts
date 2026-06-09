@@ -1,6 +1,6 @@
 import type { ProgramState, DayData } from '../data/initialData';
 import { generateId } from './chatService';
-import { AIClient } from './aiClient';
+import { apiUrl } from './apiConfig';
 
 export interface DailyBrief {
   id: string;
@@ -22,28 +22,6 @@ export interface CoachInsight {
   severity: 'positive' | 'warning' | 'critical';
 }
 
-const PROVIDER_PREFERENCE = ['OPENROUTER', 'GEMINI', 'DEEPSEEK', 'FIREWORKS'];
-
-function findFirstConfiguredProvider(): string | null {
-  for (const p of PROVIDER_PREFERENCE) {
-    if (localStorage.getItem(`API_KEY_${p}`)) return p;
-  }
-  return null;
-}
-
-async function callAI(system: string, user: string): Promise<string> {
-  const provider = findFirstConfiguredProvider();
-  if (!provider) return '';
-
-  try {
-    const client = new AIClient(provider);
-    const prompt = `${system}\n\n${user}`;
-    return await client.generate(prompt);
-  } catch {
-    return '';
-  }
-}
-
 export function computeDisciplineTrend(days: DayData[]): { avg: number; trend: 'up' | 'down' | 'stable'; deltas: number[] } {
   const recent = days.slice(0, 7).reverse();
   if (recent.length < 2) return { avg: 0, trend: 'stable', deltas: [] };
@@ -62,26 +40,26 @@ export function computeDisciplineTrend(days: DayData[]): { avg: number; trend: '
 
 export async function generateBrief(state: ProgramState): Promise<DailyBrief | null> {
   const trend = computeDisciplineTrend(state.days);
-  const systemPrompt = `Tu es le commandant IA d'Aegis Flow. Génère un briefing quotidien en français, format JSON strict:
-{
-  "summary": "1 phrase sur la journée",
-  "trend": "1 phrase sur la tendance discipline 7j (${trend.trend}, moyenne ${trend.avg})",
-  "urgentTasks": "1 phrase rappel des tâches prioritaires si applicable",
-  "dailyGoal": "1 objectif SMART pour aujourd'hui",
-  "quote": "1 citation inspirante courte avec auteur"
-}
-Réponds UNIQUEMENT avec le JSON, sans backticks ni markdown.`;
-
-  const userPrompt = `Jour J${state.currentDay}, Phase ${state.currentSaaSPhase}.
-MRR: ${state.mrr}€, Clients: ${state.payingCustomers}, Livres terminés: ${state.books.filter(b => b.status === 'terminé').length}.
-Tâches actives: ${state.tasks.filter(t => t.status !== 'done').length}.`;
-
-  const raw = await callAI(systemPrompt, userPrompt);
-  if (!raw) return null;
-
   try {
-    const parsed = JSON.parse(raw);
-    return { id: generateId(), day: state.currentDay, date: new Date().toISOString(), ...parsed, generatedAt: Date.now() };
+    const response = await fetch(apiUrl('/api/briefing/generate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        currentDay: state.currentDay,
+        currentSaaSPhase: state.currentSaaSPhase,
+        mrr: state.mrr,
+        payingCustomers: state.payingCustomers,
+        booksFinished: state.books.filter(b => b.status === 'terminé').length,
+        activeTasks: state.tasks.filter(t => t.status !== 'done').length,
+        disciplineTrend: trend.trend,
+        disciplineAvg: trend.avg,
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return { id: generateId(), day: state.currentDay, date: new Date().toISOString(), ...data, generatedAt: Date.now() };
   } catch {
     return null;
   }
@@ -89,25 +67,30 @@ Tâches actives: ${state.tasks.filter(t => t.status !== 'done').length}.`;
 
 export async function generateCoachInsight(state: ProgramState): Promise<CoachInsight | null> {
   const corr = computeCorrelation(state.days);
-  const systemPrompt = `Tu es le coach IA d'Aegis Flow. Analyse ces données et génère 1 insight corrélationnel en français, format JSON strict:
-{
-  "insight": "1 phrase clé reliant discipline et performance",
-  "suggestion": "1 action concrète recommandée",
-  "severity": "positive|warning|critical"
-}
-Corrélation calculée: ${corr.toFixed(2)} (0=nulle, 1=parfaite).
-Réponds UNIQUEMENT JSON, sans backticks.`;
-
-  const userPrompt = `Jour J${state.currentDay}. Tendance: ${computeDisciplineTrend(state.days).trend}.
-MRR: ${state.mrr}€. Streak anglais: ${state.englishStreak}. Streak sport: ${state.sportStreak}.
-Discipline actuelle: ${state.currentDayInput.prayerHours}h prière, ${state.currentDayInput.bibleChapters} chap bible, ${state.currentDayInput.englishMinutes}min anglais, ${state.currentDayInput.sport.pushups} pushups.`;
-
-  const raw = await callAI(systemPrompt, userPrompt);
-  if (!raw) return null;
-
+  const trend = computeDisciplineTrend(state.days);
   try {
-    const parsed = JSON.parse(raw);
-    return { id: generateId(), correlation: corr, ...parsed };
+    const response = await fetch(apiUrl('/api/insight/generate'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        currentDay: state.currentDay,
+        disciplineTrend: trend.trend,
+        correlation: corr,
+        mrr: state.mrr,
+        payingCustomers: state.payingCustomers,
+        englishStreak: state.englishStreak,
+        sportStreak: state.sportStreak,
+        prayerHours: state.currentDayInput.prayerHours,
+        bibleChapters: state.currentDayInput.bibleChapters,
+        englishMinutes: state.currentDayInput.englishMinutes,
+        pushups: state.currentDayInput.sport.pushups,
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return { id: generateId(), correlation: corr, ...data };
   } catch {
     return null;
   }

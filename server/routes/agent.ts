@@ -46,7 +46,7 @@ async function webSearch(query: string): Promise<string> {
 }
 
 router.post('/chat', async (req, res) => {
-  const { messages, model: modelName, sessionId, reasoning, webSearchEnabled } = req.body;
+  const { messages, model: modelName, sessionId, reasoning, webSearchEnabled, context: userContext } = req.body;
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -99,9 +99,11 @@ router.post('/chat', async (req, res) => {
     else if (reasoning === 'high') maxTokens = 16384;
     else if (reasoning === 'max') maxTokens = 32000;
 
-    let systemContent = `Tu es un assistant agentique intégré au dashboard Aegis Flow.
+    let systemContent = userContext ? `${userContext}\n\n---\n\n` : '';
 
-Tu disposes d'OUTILS puissants pour aider l'utilisateur :
+    systemContent += `Tu es un assistant agentique intégré au dashboard Aegis Flow pour Joy, fondateur & CEO.
+
+Tu disposes d'OUTILS puissants pour aider Joy :
 1. **Bash** — Exécuter des commandes shell (terminal)
 2. **Read** — Lire des fichiers ou lister des dossiers
 3. **Write** — Créer/écrire des fichiers
@@ -117,7 +119,8 @@ RÈGLES :
 - Sois concis et proactif. Propose des solutions, ne te contente pas de répondre.
 - Tu peux exécuter plusieurs outils à la suite pour accomplir une tâche complexe.
 - Pour le terminal : exécute des commandes bash. Tu peux installer des packages, lancer des scripts, etc.
-- **web_search**: utilise-le pour toute question d'actualité, technique récente, ou information factuelle.`;
+- **web_search**: utilise-le pour toute question d'actualité, technique récente, ou information factuelle.
+- Tu es personnalisé pour Joy : tu connais sa mission, ses objectifs SaaS & Geo-AI, sa discipline quotidienne. Utilise ces infos pour contextualiser tes réponses.`;
 
     if (reasoning && reasoning !== 'off') {
       const reasoningLabels: Record<string, string> = { low: 'légère', medium: 'modérée', high: 'profonde', max: 'maximale' };
@@ -134,6 +137,10 @@ RÈGLES :
       } catch {}
     }
 
+    const reasoningEffort = reasoning && reasoning !== 'off'
+      ? ({ low: 'low', medium: 'medium', high: 'high', max: 'xhigh' } as Record<string, string>)[reasoning]
+      : undefined;
+
     const result = streamText({
       model,
       maxOutputTokens: maxTokens,
@@ -144,15 +151,27 @@ RÈGLES :
       tools,
       stopWhen: stepCountIs(25),
       maxRetries: 0,
+      ...(reasoningEffort ? {
+        providerOptions: {
+          openai: {
+            reasoning: { effort: reasoningEffort },
+          },
+        },
+      } : {}),
     });
 
     let fullContent = '';
+    let fullReasoning = '';
 
     for await (const chunk of result.fullStream) {
       switch (chunk.type) {
         case 'text-delta':
           fullContent += chunk.text || '';
           res.write(`data: ${JSON.stringify({ type: 'text', content: chunk.text })}\n\n`);
+          break;
+        case 'reasoning':
+          fullReasoning += chunk.textDelta || '';
+          res.write(`data: ${JSON.stringify({ type: 'reasoning', content: chunk.textDelta })}\n\n`);
           break;
         case 'tool-call':
           res.write(`data: ${JSON.stringify({ type: 'tool-start', toolName: chunk.toolName, args: chunk.input, id: chunk.toolCallId })}\n\n`);
@@ -164,7 +183,7 @@ RÈGLES :
           res.write(`data: ${JSON.stringify({ type: 'error', error: typeof chunk.error === 'string' ? chunk.error : String(chunk.error) })}\n\n`);
           break;
         case 'finish':
-          res.write(`data: ${JSON.stringify({ type: 'done', finishReason: chunk.finishReason, usage: chunk.totalUsage })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'done', finishReason: chunk.finishReason, usage: chunk.totalUsage, reasoning: fullReasoning })}\n\n`);
           break;
       }
     }

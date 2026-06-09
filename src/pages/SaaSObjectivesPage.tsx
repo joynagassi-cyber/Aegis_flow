@@ -1,14 +1,41 @@
-import { useMemo } from 'react';
-import { Flag, TrendingUp, Users, DollarSign, Code2, CheckCircle2 } from 'lucide-react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
+import { Flag, TrendingUp, Users, DollarSign, Code2, CheckCircle2, ClipboardList, Loader2 } from 'lucide-react';
 import type { ProgramState } from '../data/initialData';
 import { SAAS_PHASES, getCurrentPhase, getPhaseProgress } from '../data/saasObjectives';
 import { toPercent } from '../utils/helpers';
+import { getCurrentSaaSChecklist, getChecklistProgress, type ChecklistItem } from '../data/checklists';
+import { fetchChecklistProgress, toggleChecklistItem } from '../services/checklistService';
 
 interface SaaSObjectivesPageProps {
   state: ProgramState;
 }
 
 export function SaaSObjectivesPage({ state }: SaaSObjectivesPageProps) {
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+  const [checklistLoading, setChecklistLoading] = useState(false);
+
+  const currentChecklist = useMemo(() => getCurrentSaaSChecklist(state.currentDay), [state.currentDay]);
+  const progress = useMemo(() => getChecklistProgress(checklistItems), [checklistItems]);
+
+  const loadProgress = useCallback(async () => {
+    setChecklistLoading(true);
+    const saved = await fetchChecklistProgress('saas', currentChecklist.sectionId);
+    setChecklistItems(currentChecklist.items.map(item => ({
+      ...item,
+      done: saved[item.id] ?? item.done,
+    })));
+    setChecklistLoading(false);
+  }, [currentChecklist]);
+
+  useEffect(() => { loadProgress(); }, [loadProgress]);
+
+  const handleToggle = async (itemId: string) => {
+    const item = checklistItems.find(i => i.id === itemId);
+    if (!item) return;
+    const newDone = !item.done;
+    setChecklistItems(prev => prev.map(i => i.id === itemId ? { ...i, done: newDone } : i));
+    await toggleChecklistItem('saas', currentChecklist.sectionId, itemId, newDone);
+  };
   const currentPhase = useMemo(() => getCurrentPhase(state.currentDay), [state.currentDay]);
   const phaseProgress = useMemo(
     () => getPhaseProgress(state.currentDay, currentPhase, {
@@ -170,6 +197,55 @@ export function SaaSObjectivesPage({ state }: SaaSObjectivesPageProps) {
             );
           })}
         </div>
+      </section>
+
+      <section className="card-glass space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl bg-[var(--success)]/10 p-3 text-[var(--success)]">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--text-muted)]">
+              Checklist
+            </p>
+            <h3 className="mt-1 font-syne text-lg font-bold">{currentChecklist.sectionLabel}</h3>
+          </div>
+          {checklistLoading && <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" />}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 rounded-full bg-[var(--surface-3)]">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%`, background: currentPhase.color }}
+            />
+          </div>
+          <span className="text-xs font-bold" style={{ color: currentPhase.color }}>{progress}%</span>
+        </div>
+        <ul className="space-y-1.5">
+          {checklistItems.map(item => (
+            <li key={item.id}>
+              <button
+                onClick={() => handleToggle(item.id)}
+                className={`w-full flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                  item.done
+                    ? 'border-[var(--success)]/30 bg-[var(--success)]/5'
+                    : 'border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--accent)]/30'
+                }`}
+              >
+                <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-all ${
+                  item.done
+                    ? 'border-[var(--success)] bg-[var(--success)] text-white'
+                    : 'border-[var(--border)] text-transparent'
+                }`}>
+                  {item.done ? '✓' : ''}
+                </span>
+                <span className={`text-sm leading-6 ${item.done ? 'text-[var(--text-muted)] line-through' : 'text-[var(--text)]'}`}>
+                  {item.text}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-2">

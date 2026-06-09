@@ -1,15 +1,9 @@
 import { useRef, useState } from 'react';
-import { Image, FileText, File as FilePdf, X } from 'lucide-react';
+import { Image, FileText, File as FilePdf } from 'lucide-react';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
 }
-
-const ACCEPTED_TYPES = {
-  'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
-  'text/*': ['.md', '.txt', '.csv', '.json', '.html', '.js', '.ts', '.py', '.css'],
-  'application/pdf': ['.pdf'],
-};
 
 export function FileUpload({ onFileSelect }: FileUploadProps) {
   const [dragOver, setDragOver] = useState(false);

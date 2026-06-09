@@ -2,44 +2,57 @@ import { type ElementType } from 'react';
 import {
   LayoutDashboard, CalendarDays, CheckCircle2, BookOpen, Rocket,
   Sparkles, BarChart3, Clock, Timer, Settings2, User, MessageSquare,
-  ChevronLeft, ChevronRight, Archive, Target, History,
+  ChevronLeft, ChevronRight, Archive, Target, History, Radar,
 } from 'lucide-react';
 import { Logo } from './Logo';
 
 export type TabId =
   | 'overview' | 'daily' | 'tasks' | 'books' | 'geoai'
   | 'journal' | 'analytics' | 'planning' | 'pomodoro' | 'settings' | 'profile'
-  | 'chat' | 'artifacts' | 'objectives' | 'sessions';
+  | 'chat' | 'artifacts' | 'objectives' | 'sessions' | 'techwatch';
+
+export type TabCategory = 'overview' | 'flux' | 'data' | 'resources' | 'account';
 
 export interface SidebarTab {
   id: TabId;
   label: string;
   icon: ElementType;
-  category: 'operations' | 'progress' | 'resources';
+  category: TabCategory;
 }
 
 export const SIDEBAR_TABS: SidebarTab[] = [
-  { id: 'daily', label: 'Journée', icon: CalendarDays, category: 'operations' },
-  { id: 'tasks', label: 'Tâches', icon: CheckCircle2, category: 'operations' },
-  { id: 'planning', label: 'Planning', icon: Clock, category: 'operations' },
-  { id: 'pomodoro', label: 'Pomodoro', icon: Timer, category: 'operations' },
-  { id: 'chat', label: 'IA Chat', icon: MessageSquare, category: 'operations' },
-  { id: 'sessions', label: 'Sessions', icon: History, category: 'operations' },
-  { id: 'overview', label: 'Vue générale', icon: LayoutDashboard, category: 'progress' },
-  { id: 'objectives', label: 'Objectifs SaaS', icon: Target, category: 'progress' },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'progress' },
-  { id: 'journal', label: 'Journal', icon: Sparkles, category: 'progress' },
+  { id: 'overview', label: 'Vue générale', icon: LayoutDashboard, category: 'overview' },
+  { id: 'daily', label: 'Journée', icon: CalendarDays, category: 'flux' },
+  { id: 'planning', label: 'Planning', icon: Clock, category: 'flux' },
+  { id: 'tasks', label: 'Tâches', icon: CheckCircle2, category: 'flux' },
+  { id: 'pomodoro', label: 'Pomodoro', icon: Timer, category: 'flux' },
+  { id: 'chat', label: 'IA Chat', icon: MessageSquare, category: 'flux' },
+  { id: 'sessions', label: 'Sessions', icon: History, category: 'flux' },
+  { id: 'objectives', label: 'Objectifs SaaS', icon: Target, category: 'data' },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'data' },
+  { id: 'journal', label: 'Journal', icon: Sparkles, category: 'data' },
   { id: 'books', label: 'Bibliothèque', icon: BookOpen, category: 'resources' },
   { id: 'artifacts', label: 'Artefacts', icon: Archive, category: 'resources' },
   { id: 'geoai', label: 'Geo-AI', icon: Rocket, category: 'resources' },
-  { id: 'profile', label: 'Profil', icon: User, category: 'resources' },
-  { id: 'settings', label: 'Réglages', icon: Settings2, category: 'resources' },
+  { id: 'techwatch', label: 'Tech Watch', icon: Radar, category: 'resources' },
+  { id: 'profile', label: 'Profil', icon: User, category: 'account' },
+  { id: 'settings', label: 'Réglages', icon: Settings2, category: 'account' },
 ];
 
-const CATEGORY_COLORS: Record<string, { label: string; accent: string; glow: string; border: string }> = {
-  operations: { label: 'Opérations', accent: '#00B4FF', glow: 'rgba(0,180,255,0.15)', border: 'rgba(0,180,255,0.3)' },
-  progress: { label: 'Progrès', accent: '#00E676', glow: 'rgba(0,230,118,0.15)', border: 'rgba(0,230,118,0.3)' },
-  resources: { label: 'Ressources', accent: '#FFD600', glow: 'rgba(255,214,0,0.15)', border: 'rgba(255,214,0,0.3)' },
+const CATEGORY_LABELS: Record<TabCategory, string> = {
+  overview: 'Vue d\'ensemble',
+  flux: 'Mon flux',
+  data: 'Objectifs & Données',
+  resources: 'Ressources',
+  account: 'Compte',
+};
+
+const CATEGORY_OPACITY: Record<TabCategory, number> = {
+  overview: 1,
+  flux: 0.85,
+  data: 0.7,
+  resources: 0.55,
+  account: 0.4,
 };
 
 interface SidebarProps {
@@ -61,7 +74,7 @@ export function Sidebar({
   onMobileClose,
   disciplineScore,
 }: SidebarProps) {
-  const categories = ['operations', 'progress', 'resources'] as const;
+  const categories: TabCategory[] = ['overview', 'flux', 'data', 'resources', 'account'];
 
   return (
     <>
@@ -99,23 +112,14 @@ export function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         {categories.map(cat => {
-          const catColor = CATEGORY_COLORS[cat];
           return (
-            <div key={cat} className="mb-4">
+            <div key={cat} className={cat === 'overview' ? 'mb-3' : 'mb-5'}>
               {!collapsed && (
-                <div
-                  className="mb-2 rounded-lg px-2 py-1.5"
-                  style={{ background: catColor.glow }}
-                >
-                  <p
-                    className="text-[10px] font-bold uppercase tracking-[0.3em]"
-                    style={{ color: catColor.accent }}
-                  >
-                    {catColor.label}
-                  </p>
-                </div>
+                <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--text-subtle)]" style={{ opacity: CATEGORY_OPACITY[cat] }}>
+                  {CATEGORY_LABELS[cat]}
+                </p>
               )}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {SIDEBAR_TABS.filter(t => t.category === cat).map(tab => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
@@ -125,19 +129,19 @@ export function Sidebar({
                       key={tab.id}
                       type="button"
                       onClick={() => onTabChange(tab.id)}
-                      className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
+                      className={`group relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-bold transition-all duration-200 ${
                         isActive
-                          ? 'text-white shadow-[0_0_20px_rgba(0,102,255,0.2)]'
-                          : 'text-[var(--text-muted)]'
+                          ? 'text-white'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
                       }`}
-                      style={isActive ? { background: catColor.accent } : undefined}
+                      style={isActive ? { background: 'var(--primary)', boxShadow: 'var(--shadow-btn)' } : undefined}
                       title={collapsed ? tab.label : undefined}
                     >
                       <span
                         className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
                           isActive
                             ? 'bg-white/20'
-                            : 'bg-[var(--surface-3)]/40 group-hover:bg-[var(--surface-3)]'
+                            : 'bg-transparent group-hover:bg-[var(--surface-3)]'
                         }`}
                       >
                         <Icon
@@ -145,17 +149,14 @@ export function Sidebar({
                           style={{
                             color: isActive
                               ? '#FFFFFF'
-                              : 'var(--text)',
-                            opacity: isActive ? 1 : 0.5,
+                              : 'var(--text-muted)',
+                            opacity: isActive ? 1 : 0.6,
                           }}
                         />
                       </span>
                       {!collapsed && <span>{tab.label}</span>}
                       {isActive && !collapsed && (
-                        <span
-                          className="ml-auto h-2 w-2 rounded-full"
-                          style={{ background: catColor.accent, opacity: 0.6 }}
-                        />
+                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/40" />
                       )}
                     </button>
                   );
@@ -174,13 +175,17 @@ export function Sidebar({
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
+          <div className="rounded-[12px] border border-[var(--border)] bg-[var(--surface-2)] p-3">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Discipline</p>
-            <p className="mt-1 font-syne text-xl font-bold" style={{ color: '#00B4FF' }}>{disciplineScore}%</p>
+            <p className="mt-1 font-syne text-xl font-bold text-[var(--primary)]">{disciplineScore}%</p>
             <div className="mt-2 h-1.5 rounded-full bg-[var(--surface-3)]">
               <div
                 className="h-full rounded-full"
-                style={{ width: `${disciplineScore}%`, background: 'linear-gradient(90deg, #00B4FF, #00E676)' }}
+                style={{
+                  width: `${disciplineScore}%`,
+                  background: 'linear-gradient(90deg, var(--primary), var(--accent))',
+                  boxShadow: '0 0 8px var(--primary-glow)',
+                }}
               />
             </div>
           </div>
