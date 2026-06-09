@@ -63,6 +63,7 @@ router.post('/chat', async (req, res) => {
 
     const result = streamText({
       model,
+      maxOutputTokens: 2048,
       messages: [
         {
           role: 'system',

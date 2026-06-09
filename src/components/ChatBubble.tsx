@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { SyntaxHighlighter, oneDark } from '../utils/syntaxHighlighter';
 import { Copy, Check, Bot, User, Terminal, FileCode, Loader2 } from 'lucide-react';
 import type { ChatMessage } from '../services/chatService';
 import type { ToolCall } from '../services/agentClient';
