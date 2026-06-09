@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { createOpenAI } from '@ai-sdk/openai';
-import { streamText, stepCountIs } from 'ai';
+import { streamText, stepCountIs, jsonSchema } from 'ai';
 import { createAgentTools, createLocalSandbox } from 'bashkit';
 import path from 'path';
 import fs from 'fs';
-import { z } from 'zod';
 import { pool } from '../db.js';
 
 const router = Router();
@@ -68,9 +67,14 @@ router.post('/chat', async (req, res) => {
     const tools: Record<string, any> = {
       ...agentTools.tools,
       web_search: {
-        description: 'Effectue une recherche web pour obtenir des informations récentes ou des faits précis. Utilise cette outil quand une question nécessite des connaissances actuelles.',
-        parameters: z.object({
-          query: z.string().describe('La requête de recherche précise'),
+        description: 'Effectue une recherche web pour obtenir des informations récentes ou des faits précis. Utilise quand une question nécessite des connaissances actuelles.',
+        inputSchema: jsonSchema({
+          type: 'object',
+          properties: {
+            query: { type: 'string', description: 'La requête de recherche précise' },
+          },
+          required: ['query'],
+          additionalProperties: false,
         }),
         execute: async ({ query }: { query: string }) => {
           return await webSearch(query);
