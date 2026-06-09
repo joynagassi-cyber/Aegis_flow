@@ -74,7 +74,26 @@ export function ChatBubble({ message, onSelectArtifact, toolCalls }: ChatMessage
               : 'bg-[var(--surface)] border border-[var(--border)]'
           }`}>
             {isUser ? (
-              <p className="text-sm leading-6 text-[var(--text)] whitespace-pre-wrap">{message.content}</p>
+              <div>
+                {message.content.startsWith('[') && message.content.includes('"image_url"') ? (
+                  (() => {
+                    try {
+                      const parts = JSON.parse(message.content);
+                      return parts.map((p: any, i: number) =>
+                        p.type === 'image_url'
+                          ? <img key={i} src={p.image_url.url} alt="Upload" className="max-w-full rounded-xl my-2 max-h-64 object-contain" />
+                          : <p key={i} className="text-sm leading-6 text-[var(--text)] whitespace-pre-wrap">{p.text}</p>
+                      );
+                    } catch {
+                      return <p className="text-sm leading-6 text-[var(--text)] whitespace-pre-wrap">{message.content}</p>;
+                    }
+                  })()
+                ) : message.content.startsWith('data:image') ? (
+                  <img src={message.content} alt="Upload" className="max-w-full rounded-xl max-h-64 object-contain" />
+                ) : (
+                  <p className="text-sm leading-6 text-[var(--text)] whitespace-pre-wrap">{message.content}</p>
+                )}
+              </div>
             ) : (
               <div className="prose prose-sm prose-invert max-w-none">
                 <ReactMarkdown

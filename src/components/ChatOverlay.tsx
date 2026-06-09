@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Globe, Trash2, Sparkles, X, PanelRightOpen } from 'lucide-react';
+import { Send, Globe, Trash2, Sparkles, X, PanelRightOpen, Paperclip, Brain, Image, FileUp } from 'lucide-react';
 import { ChatBubble } from './ChatBubble';
 import { ArtifactPanel } from './ArtifactPanel';
-import { streamChat, generateId, scanForArtifacts, resetSeenArtifacts, searchWeb } from '../services/chatService';
+import { FileUpload } from './FileUpload';
+import { streamChat, generateId, scanForArtifacts, resetSeenArtifacts, searchWeb, readFileAsText, readFileAsBase64 } from '../services/chatService';
 import type { ChatMessage, Artifact } from '../services/chatService';
 
 interface ChatOverlayProps {
@@ -12,13 +13,15 @@ interface ChatOverlayProps {
 
 export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'welcome', role: 'assistant', content: '👋 Bienvenue dans **Aegis Flow IA**.\n\nPose-moi une question, demande un résumé, ou tape `/aide` pour voir ce que je peux faire.', timestamp: Date.now() },
+    { id: 'welcome', role: 'assistant', content: '👋 Bienvenue dans **Aegis Flow IA**.\n\nPose-moi une question, demande un résumé, joins une image, ou tape `/aide` pour voir ce que je peux faire.', timestamp: Date.now() },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const [artifactCount, setArtifactCount] = useState(0);
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
+  const [showFileUpload, setShowFileUpload] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const contentRef = useRef('');
@@ -29,17 +32,52 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
 
   useEffect(() => scrollToBottom(), [messages, streaming, scrollToBottom]);
 
+  const handleFileSelect = async (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext);
+    const isText = ['md', 'markdown', 'txt', 'csv', 'json', 'html', 'js', 'ts', 'py', 'css'].includes(ext);
+    const isPdf = ext === 'pdf';
+
+    if (isImage) {
+      const base64 = await readFileAsBase64(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: `data:${file.type};base64,${base64}`, type: 'image' }]);
+    } else if (isText) {
+      const text = await readFileAsText(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: text, type: 'text' }]);
+    } else if (isPdf) {
+      const text = await readFileAsText(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: text, type: 'pdf' }]);
+    }
+    setShowFileUpload(false);
+  };
+
+  const buildContentWithFiles = (text: string): any => {
+    if (attachedFiles.length === 0) return text;
+    const parts: any[] = [];
+    if (text.trim()) parts.push({ type: 'text', text });
+    for (const f of attachedFiles) {
+      if (f.type === 'image') {
+        parts.push({ type: 'image_url', image_url: { url: f.content } });
+      } else {
+        parts.push({ type: 'text', text: `\n\n[Fichier joint: ${f.name}]\n\`\`\`\n${f.content.slice(0, 10000)}\n\`\`\`` });
+      }
+    }
+    return parts.length === 1 ? parts[0].text : parts;
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || streaming) return;
+    if ((!text && attachedFiles.length === 0) || streaming) return;
     setInput('');
+    const content = buildContentWithFiles(text);
     resetSeenArtifacts();
     contentRef.current = '';
 
-    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: text, timestamp: Date.now() };
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: typeof content === 'string' ? content : JSON.stringify(content), timestamp: Date.now() };
     const assistantId = generateId();
 
     setMessages(prev => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }]);
+    setAttachedFiles([]);
     setStreaming(true);
 
     try {
@@ -123,6 +161,19 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
             <ArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} />
           </div>
         )}
+        {attachedFiles.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {attachedFiles.map((f, i) => (
+              <div key={i} className="flex items-center gap-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] px-2.5 py-1.5 text-[10px]">
+                {f.type === 'image' ? <Image className="h-3 w-3 text-[var(--accent)]" /> : <FileUp className="h-3 w-3 text-[var(--accent)]" />}
+                <span className="text-[var(--text-muted)]">{f.name}</span>
+                <button onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} className="ml-1 text-[var(--text-muted)] hover:text-[var(--danger)]">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2 transition focus-within:border-[var(--accent)]/50">
           <textarea
             ref={inputRef}
@@ -135,6 +186,21 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
             disabled={streaming}
           />
           <div className="flex items-center gap-1">
+            <div className="relative">
+              <button
+                onClick={() => setShowFileUpload(!showFileUpload)}
+                className={`rounded-lg p-1.5 transition ${showFileUpload ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]'}`}
+                title="Joindre un fichier"
+                disabled={streaming}
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+              {showFileUpload && (
+                <div className="absolute bottom-full left-0 mb-2 w-56 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl z-50">
+                  <FileUpload onFileSelect={handleFileSelect} />
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setWebSearch(!webSearch)}
               className={`rounded-lg p-1.5 transition ${webSearch ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]'}`}
@@ -145,7 +211,7 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
             </button>
             <button
               onClick={handleSend}
-              disabled={!input.trim() || streaming}
+              disabled={(!input.trim() && attachedFiles.length === 0) || streaming}
               className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] transition disabled:opacity-30"
             >
               <Send className="h-4 w-4" />

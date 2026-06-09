@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Globe, FileText, Trash2, Sparkles, X, Terminal, Bot, Cpu } from 'lucide-react';
+import { Send, Globe, FileText, Trash2, Sparkles, X, Terminal, Bot, Cpu, Paperclip, Brain, Image, FileUp } from 'lucide-react';
 import { ChatBubble } from '../components/ChatBubble';
 import { ArtifactPanel } from '../components/ArtifactPanel';
 import { TerminalOutput } from '../components/TerminalOutput';
 import { WorkspaceViewer } from '../components/WorkspaceViewer';
-import { streamChat, generateId, scanForArtifacts, resetSeenArtifacts, searchWeb } from '../services/chatService';
+import { FileUpload } from '../components/FileUpload';
+import { streamChat, generateId, scanForArtifacts, resetSeenArtifacts, searchWeb, readFileAsText, readFileAsBase64 } from '../services/chatService';
 import { getApiBase } from '../services/apiConfig';
 import { saveArtifactsBatch } from '../services/artifactService';
 import { streamAgentChat, generateSessionId } from '../services/agentClient';
@@ -13,22 +14,31 @@ import type { ToolCall } from '../services/agentClient';
 
 type Mode = 'chat' | 'agent';
 type PanelTab = 'artefacts' | 'terminal' | 'workspace';
+type ReasoningLevel = 'off' | 'low' | 'medium' | 'high' | 'max';
 
-export function ChatPage() {
+interface ChatPageProps {
+  initialSessionId?: string | null;
+}
+
+export function ChatPage({ initialSessionId }: ChatPageProps) {
   const [mode, setMode] = useState<Mode>('chat');
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 'welcome', role: 'assistant', content: '👋 Bienvenue dans **Aegis Flow IA**.\n\nChoisis un mode ci-dessous :\n\n- **💬 Chat** — Assistant conversationnel standard (markdown, artefacts)\n- **🤖 Agent** — Agent avec terminal + workspace (bash, fichiers, outils)\n\nTape directement ta question ou passe en mode Agent pour exécuter du code.', timestamp: Date.now() },
+    { id: 'welcome', role: 'assistant', content: '👋 Bienvenue dans **Aegis Flow IA**.\n\nChoisis un mode ci-dessous :\n\n- **💬 Chat** — Assistant conversationnel standard (markdown, artefacts)\n- **🤖 Agent** — Agent avec terminal + workspace (bash, fichiers, outils, recherche web)\n\nTape directement ta question ou passe en mode Agent pour exécuter du code.', timestamp: Date.now() },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
+  const [reasoning, setReasoning] = useState<ReasoningLevel>('off');
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [panelTab, setPanelTab] = useState<PanelTab>('artefacts');
   const [streamArtifactCount, setStreamArtifactCount] = useState(0);
   const [toolCallsMap, setToolCallsMap] = useState<Record<string, ToolCall[]>>({});
   const [allToolCalls, setAllToolCalls] = useState<ToolCall[]>([]);
-  const sessionIdRef = useRef(generateSessionId());
+  const [attachedFiles, setAttachedFiles] = useState<{ name: string; content: string; type: string }[]>([]);
+  const [showReasoningMenu, setShowReasoningMenu] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const sessionIdRef = useRef(initialSessionId || generateSessionId());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const contentRef = useRef('');
@@ -44,7 +54,7 @@ export function ChatPage() {
 
   useEffect(() => {
     const sid = sessionIdRef.current;
-    localStorage.setItem('AEGIS_SESSION_ID', sid);
+    if (sid) localStorage.setItem('AEGIS_SESSION_ID', sid);
     const base = getApiBase();
     fetch(`${base}/api/chat/history/${encodeURIComponent(sid)}`)
       .then(r => r.ok ? r.json() : [])
@@ -67,7 +77,7 @@ export function ChatPage() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [initialSessionId]);
 
   const handleClear = () => {
     resetSeenArtifacts();
@@ -77,27 +87,63 @@ export function ChatPage() {
     setStreamArtifactCount(0);
     setToolCallsMap({});
     setAllToolCalls([]);
+    setAttachedFiles([]);
   };
 
   const handleSelectArtifact = (content: string, lang: string) => {
-    const typeMap: Record<string, Artifact['type']> = { html: 'html', json: 'json', csv: 'csv', markdown: 'markdown', md: 'markdown' };
+    const typeMap: Record<string, Artifact['type']> = { html: 'html', json: 'json', csv: 'csv', markdown: 'markdown', md: 'markdown', svg: 'html', mermaid: 'markdown' };
     setArtifact({ id: crypto.randomUUID(), type: typeMap[lang] || 'markdown', title: `Fichier .${lang}`, content, language: lang });
     setPanelTab('artefacts');
     setShowPanel(true);
   };
 
+  const handleFileSelect = async (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext);
+    const isText = ['md', 'markdown', 'txt', 'csv', 'json', 'html', 'js', 'ts', 'py', 'css'].includes(ext);
+    const isPdf = ext === 'pdf';
+
+    if (isImage) {
+      const base64 = await readFileAsBase64(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: `data:${file.type};base64,${base64}`, type: 'image' }]);
+    } else if (isText) {
+      const text = await readFileAsText(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: text, type: 'text' }]);
+    } else if (isPdf) {
+      const text = await readFileAsText(file);
+      setAttachedFiles(prev => [...prev, { name: file.name, content: text, type: 'pdf' }]);
+    }
+    setShowFileUpload(false);
+  };
+
+  const buildContentWithFiles = (text: string): any => {
+    if (attachedFiles.length === 0) return text;
+    const parts: any[] = [];
+    if (text.trim()) parts.push({ type: 'text', text });
+    for (const f of attachedFiles) {
+      if (f.type === 'image') {
+        parts.push({ type: 'image_url', image_url: { url: f.content } });
+      } else {
+        parts.push({ type: 'text', text: `\n\n[Fichier joint: ${f.name}]\n\`\`\`\n${f.content.slice(0, 10000)}\n\`\`\`` });
+      }
+    }
+    return parts.length === 1 ? parts[0].text : parts;
+  };
+
   const handleChatSend = async () => {
     const text = input.trim();
-    if (!text || streaming) return;
+    if ((!text && attachedFiles.length === 0) || streaming) return;
     setInput('');
+    const content = buildContentWithFiles(text);
     resetSeenArtifacts();
     contentRef.current = '';
     streamArtifactsRef.current = [];
 
-    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: text, timestamp: Date.now() };
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: typeof content === 'string' ? content : JSON.stringify(content), timestamp: Date.now() };
     const assistantId = generateId();
 
     setMessages(prev => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }]);
+    setAttachedFiles([]);
     setStreaming(true);
 
     try {
@@ -106,7 +152,7 @@ export function ChatPage() {
         .map(m => ({ role: m.role, content: m.content }));
       const systemMsg = webSearch
         ? `Tu es un assistant IA utile intégré à Aegis Flow Dashboard. L'utilisateur active la recherche web. Contexte : ${await searchWeb(text)}`
-        : 'Tu es un assistant IA utile intégré à Aegis Flow Dashboard. Réponds en markdown. Quand tu génères du code HTML, JSON, CSV ou markdown dans des blocs de code, préfixe avec ```lang.';
+        : 'Tu es un assistant IA utile intégré à Aegis Flow Dashboard. Réponds en markdown. Quand tu génères du code HTML, JSON, CSV, SVG, Mermaid ou markdown dans des blocs de code, préfixe avec ```lang.';
 
       let chunkCount = 0;
       const gen = streamChat([{ role: 'system', content: systemMsg }, ...history]);
@@ -153,23 +199,29 @@ export function ChatPage() {
 
   const handleAgentSend = async () => {
     const text = input.trim();
-    if (!text || streaming) return;
+    if ((!text && attachedFiles.length === 0) || streaming) return;
     setInput('');
+    const content = buildContentWithFiles(text);
 
-    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: text, timestamp: Date.now() };
+    const userMsg: ChatMessage = { id: generateId(), role: 'user', content: typeof content === 'string' ? content : JSON.stringify(content), timestamp: Date.now() };
     const assistantId = generateId();
     assistantIdRef.current = assistantId;
     contentRef.current = '';
     currentToolCallsRef.current = [];
 
     setMessages(prev => [...prev, userMsg, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }]);
+    setAttachedFiles([]);
     setStreaming(true);
 
     try {
       const history = [...messages, userMsg]
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.content }));
-      const gen = streamAgentChat(history, { sessionId: sessionIdRef.current });
+      const gen = streamAgentChat(history, {
+        sessionId: sessionIdRef.current,
+        reasoning,
+        webSearchEnabled: webSearch,
+      });
 
       let chunkCount = 0;
       for await (const event of gen) {
@@ -180,7 +232,6 @@ export function ChatPage() {
             if (chunkCount % 3 === 0) {
               setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: contentRef.current } : m));
             }
-
             {
               const newArtifacts = scanForArtifacts(contentRef.current);
               if (newArtifacts.length > 0) {
@@ -259,8 +310,8 @@ export function ChatPage() {
       id: 'welcome',
       role: 'assistant',
       content: newMode === 'agent'
-        ? '🤖 **Mode Agent activé** — Je peux exécuter des commandes bash, lire/écrire des fichiers, et utiliser des outils dans mon sandbox.'
-        : '💬 **Mode Chat activé** — Mode assistant standard avec génération de contenu et artefacts.',
+        ? '🤖 **Mode Agent activé** — Je peux exécuter des commandes bash, lire/écrire des fichiers, chercher sur le web, et utiliser des outils dans mon sandbox.'
+        : '💬 **Mode Chat activé** — Mode assistant standard avec génération de contenu, artefacts et vision (images).',
       timestamp: Date.now(),
     }]);
     setArtifact(null);
@@ -268,10 +319,13 @@ export function ChatPage() {
     setStreamArtifactCount(0);
     setToolCallsMap({});
     setAllToolCalls([]);
+    setAttachedFiles([]);
     sessionIdRef.current = generateSessionId();
   };
 
   const getAssistantToolCalls = (msgId: string) => toolCallsMap[msgId] || [];
+
+  const reasoningLabels: Record<ReasoningLevel, string> = { off: 'Off', low: 'Low', medium: 'Med', high: 'High', max: 'Max' };
 
   return (
     <div className="flex h-full">
@@ -345,43 +399,103 @@ export function ChatPage() {
 
         <div className="border-t border-[var(--border)] p-4">
           <div className="mx-auto max-w-3xl">
+            {attachedFiles.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {attachedFiles.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] px-2.5 py-1.5 text-xs">
+                    {f.type === 'image' ? <Image className="h-3 w-3 text-[var(--accent)]" /> : <FileUp className="h-3 w-3 text-[var(--accent)]" />}
+                    <span className="text-[var(--text-muted)]">{f.name}</span>
+                    <button onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} className="ml-1 text-[var(--text-muted)] hover:text-[var(--danger)]">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-2 transition focus-within:border-[var(--accent)]/50">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={streaming ? 'Génération en cours...' : mode === 'agent' ? 'Demande à l\'agent... (bash, fichiers, code)' : 'Pose une question... (Enter pour envoyer)'}
+                placeholder={streaming ? 'Génération en cours...' : mode === 'agent' ? 'Demande à l\'agent... (bash, fichiers, code, recherche)' : 'Pose une question... (Enter pour envoyer)'}
                 rows={1}
                 className="max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-[var(--text)] placeholder-[var(--text-muted)] outline-none"
                 disabled={streaming}
               />
               <div className="flex items-center gap-1">
-                {mode === 'chat' && (
+                <div className="relative">
                   <button
-                    onClick={() => setWebSearch(!webSearch)}
-                    className={`rounded-lg p-2 transition ${
-                      webSearch ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'
-                    }`}
-                    title="Recherche web"
+                    onClick={() => { setShowFileUpload(!showFileUpload); setShowReasoningMenu(false); }}
+                    className={`rounded-lg p-2 transition ${showFileUpload ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'}`}
+                    title="Joindre un fichier"
                     disabled={streaming}
                   >
-                    <Globe className="h-4 w-4" />
+                    <Paperclip className="h-4 w-4" />
                   </button>
-                )}
+                  {showFileUpload && (
+                    <div className="absolute bottom-full left-0 mb-2 w-56 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl z-50">
+                      <FileUpload onFileSelect={handleFileSelect} />
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setWebSearch(!webSearch)}
+                  className={`rounded-lg p-2 transition ${
+                    webSearch ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'
+                  }`}
+                  title="Recherche web"
+                  disabled={streaming}
+                >
+                  <Globe className="h-4 w-4" />
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => { setShowReasoningMenu(!showReasoningMenu); setShowFileUpload(false); }}
+                    className={`rounded-lg p-2 transition ${reasoning !== 'off' ? 'bg-purple-500/20 text-purple-400' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'}`}
+                    title={`Raisonnement: ${reasoningLabels[reasoning]}`}
+                    disabled={streaming}
+                  >
+                    <Brain className="h-4 w-4" />
+                  </button>
+                  {showReasoningMenu && (
+                    <div className="absolute bottom-full right-0 mb-2 w-36 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl z-50">
+                      {(['off', 'low', 'medium', 'high', 'max'] as ReasoningLevel[]).map(level => (
+                        <button
+                          key={level}
+                          onClick={() => { setReasoning(level); setShowReasoningMenu(false); }}
+                          className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                            reasoning === level ? 'bg-purple-500/20 text-purple-400' : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'
+                          }`}
+                        >
+                          <Brain className="h-3 w-3" />
+                          {reasoningLabels[level]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim() || streaming}
+                  disabled={(!input.trim() && attachedFiles.length === 0) || streaming}
                   className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] transition disabled:opacity-30"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </div>
             </div>
-            {webSearch && (
-              <div className="mt-1 flex items-center gap-1.5 px-2">
-                <Globe className="h-3 w-3 text-[var(--accent)]" />
-                <span className="text-[10px] text-[var(--accent)] font-bold">Recherche web activée</span>
+            {(webSearch || reasoning !== 'off') && (
+              <div className="mt-1 flex items-center gap-2 px-2">
+                {webSearch && (
+                  <span className="flex items-center gap-1 text-[10px] text-[var(--accent)] font-bold">
+                    <Globe className="h-3 w-3" /> Web
+                  </span>
+                )}
+                {reasoning !== 'off' && (
+                  <span className="flex items-center gap-1 text-[10px] text-purple-400 font-bold">
+                    <Brain className="h-3 w-3" /> {reasoningLabels[reasoning]}
+                  </span>
+                )}
               </div>
             )}
           </div>

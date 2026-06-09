@@ -38,8 +38,14 @@ export function SessionsPage({ onOpenSession }: SessionsPageProps) {
   useEffect(() => { loadSessions(); }, []);
 
   const handleDeleteSession = async (sessionId: string) => {
-    // For now, just log — server-side delete can be added later
-    console.log('Delete session:', sessionId);
+    try {
+      const base = getApiBase();
+      const res = await fetch(`${base}/api/chat/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      setSessions(prev => prev.filter(s => s.session_id !== sessionId));
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const formatDate = (iso: string) => {

@@ -81,6 +81,7 @@ export default function App() {
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chatOverlayOpen, setChatOverlayOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -303,9 +304,9 @@ export default function App() {
       case 'profile':
         return <ProfilePage key={key} state={state} onUpdateState={setState} />;
       case 'chat':
-        return <ChatPage key={key} />;
+        return <ChatPage key={key} initialSessionId={selectedSessionId} />;
       case 'sessions':
-        return <SessionsPage key={key} onOpenSession={(sid) => { setActiveTab('chat'); }} />;
+        return <SessionsPage key={key} onOpenSession={(sid) => { setSelectedSessionId(sid); setActiveTab('chat'); }} />;
       case 'settings':
         return (
           <SettingsPage

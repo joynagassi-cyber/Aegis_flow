@@ -4,6 +4,7 @@ import { streamText, stepCountIs } from 'ai';
 import { createAgentTools, createLocalSandbox } from 'bashkit';
 import path from 'path';
 import fs from 'fs';
+import { z } from 'zod';
 import { pool } from '../db.js';
 
 const router = Router();
@@ -31,8 +32,22 @@ async function createTools(sandbox: ReturnType<typeof createLocalSandbox>) {
   });
 }
 
+async function webSearch(query: string): Promise<string> {
+  try {
+    const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    const data = await r.json();
+    const abstract = data.AbstractText || '';
+    const results = (data.RelatedTopics || []).slice(0, 5).map((t: any) => t.Text || t.Result || '').filter(Boolean);
+    return [abstract, ...results].filter(Boolean).join('\n').slice(0, 5000);
+  } catch {
+    return `Recherche web pour: ${query}`;
+  }
+}
+
 router.post('/chat', async (req, res) => {
-  const { messages, model: modelName, sessionId } = req.body;
+  const { messages, model: modelName, sessionId, reasoning, webSearchEnabled } = req.body;
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -48,7 +63,20 @@ router.post('/chat', async (req, res) => {
   try {
     const sandbox = getSandbox(sessionId || 'default');
 
-    const { tools } = await createTools(sandbox);
+    const agentTools = await createTools(sandbox);
+
+    const tools: Record<string, any> = {
+      ...agentTools.tools,
+      web_search: {
+        description: 'Effectue une recherche web pour obtenir des informations récentes ou des faits précis. Utilise cette outil quand une question nécessite des connaissances actuelles.',
+        parameters: z.object({
+          query: z.string().describe('La requête de recherche précise'),
+        }),
+        execute: async ({ query }: { query: string }) => {
+          return await webSearch(query);
+        },
+      },
+    };
 
     const openrouter = createOpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
@@ -61,13 +89,13 @@ router.post('/chat', async (req, res) => {
 
     const model = openrouter.chat(modelName || 'openai/gpt-4o');
 
-    const result = streamText({
-      model,
-      maxOutputTokens: 2048,
-      messages: [
-        {
-          role: 'system',
-          content: `Tu es un assistant agentique intégré au dashboard Aegis Flow.
+    let maxTokens = 2048;
+    if (reasoning === 'low') maxTokens = 4096;
+    else if (reasoning === 'medium') maxTokens = 8192;
+    else if (reasoning === 'high') maxTokens = 16384;
+    else if (reasoning === 'max') maxTokens = 32000;
+
+    let systemContent = `Tu es un assistant agentique intégré au dashboard Aegis Flow.
 
 Tu disposes d'OUTILS puissants pour aider l'utilisateur :
 1. **Bash** — Exécuter des commandes shell (terminal)
@@ -76,6 +104,7 @@ Tu disposes d'OUTILS puissants pour aider l'utilisateur :
 4. **Edit** — Modifier des fichiers (remplacement de chaîne)
 5. **Glob** — Chercher des fichiers par pattern
 6. **Grep** — Chercher dans le contenu des fichiers
+7. **web_search** — Rechercher sur le web pour des infos récentes
 
 RÈGLES :
 - Tu travailles dans un espace de travail ISOLÉ (sandbox). Tu peux tout y faire.
@@ -83,8 +112,29 @@ RÈGLES :
 - Réponds en markdown.
 - Sois concis et proactif. Propose des solutions, ne te contente pas de répondre.
 - Tu peux exécuter plusieurs outils à la suite pour accomplir une tâche complexe.
-- Pour le terminal : exécute des commandes bash. Tu peux installer des packages, lancer des scripts, etc.`,
-        },
+- Pour le terminal : exécute des commandes bash. Tu peux installer des packages, lancer des scripts, etc.
+- **web_search**: utilise-le pour toute question d'actualité, technique récente, ou information factuelle.`;
+
+    if (reasoning && reasoning !== 'off') {
+      const reasoningLabels: Record<string, string> = { low: 'légère', medium: 'modérée', high: 'profonde', max: 'maximale' };
+      systemContent += `\n\nRÉFLEXION : Tu es en mode raisonnement ${reasoningLabels[reasoning] || reasoning}. Prends le temps de structurer ta pensée, explorer les alternatives, et fournir une réponse détaillée et justifiée.`;
+    }
+
+    if (webSearchEnabled) {
+      try {
+        const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+        if (lastUserMsg?.content) {
+          const context = await webSearch(typeof lastUserMsg.content === 'string' ? lastUserMsg.content : '');
+          systemContent += `\n\nCONTEXTE WEB RÉCENT :\n${context}`;
+        }
+      } catch {}
+    }
+
+    const result = streamText({
+      model,
+      maxOutputTokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemContent },
         ...messages,
       ],
       tools,

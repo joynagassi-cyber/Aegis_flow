@@ -143,4 +143,14 @@ router.get('/history/:sessionId', async (req, res) => {
   }
 });
 
+router.delete('/sessions/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    await pool.query('DELETE FROM chat_messages WHERE session_id = $1', [sessionId]);
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

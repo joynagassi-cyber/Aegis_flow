@@ -22,7 +22,7 @@ export interface ToolCall {
 
 export async function* streamAgentChat(
   messages: { role: string; content: string }[],
-  options?: { model?: string; sessionId?: string }
+  options?: { model?: string; sessionId?: string; reasoning?: string; webSearchEnabled?: boolean }
 ): AsyncGenerator<AgentEvent> {
   const apiKey = localStorage.getItem('API_KEY_OPENROUTER') || '';
   const sessionId = options?.sessionId || `session_${Date.now()}`;
@@ -36,6 +36,8 @@ export async function* streamAgentChat(
       messages,
       model: options?.model || localStorage.getItem('API_MODEL_OPENROUTER') || 'openai/gpt-4o',
       sessionId,
+      reasoning: options?.reasoning || 'off',
+      webSearchEnabled: options?.webSearchEnabled || false,
       ...(apiKey ? { apiKey } : {}),
     }),
   });

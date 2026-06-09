@@ -154,6 +154,10 @@ export function scanForArtifacts(fullContent: string): Artifact[] {
       found.push({ id: crypto.randomUUID(), type: 'csv', title: 'Tableau CSV', content: code, language: 'csv' });
     } else if (lang === 'markdown' || lang === 'md') {
       found.push({ id: crypto.randomUUID(), type: 'markdown', title: 'Document Markdown', content: code, language: 'markdown' });
+    } else if (lang === 'svg') {
+      found.push({ id: crypto.randomUUID(), type: 'html', title: 'Image SVG', content: code, language: 'html' });
+    } else if (lang === 'mermaid') {
+      found.push({ id: crypto.randomUUID(), type: 'markdown', title: 'Diagramme Mermaid', content: `\`\`\`mermaid\n${code}\n\`\`\``, language: 'markdown' });
     }
   }
 
@@ -194,6 +198,27 @@ export function detectArtifact(content: string): Artifact | null {
 
 export function generateId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
+}
+
+export function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1] || result);
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
 }
 
 export async function searchWeb(query: string): Promise<string> {
