@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { BookOpen, Star, Plus, Eye } from 'lucide-react';
+import { BookOpen, Star, Plus, Pencil } from 'lucide-react';
 import type { Book } from '../data/initialData';
 
 interface BookCardProps {
   book: Book;
   inLibrary?: boolean;
   onAction?: (book: Book) => void;
+  onEdit?: (book: Book) => void;
 }
 
-export function BookCard({ book, inLibrary, onAction }: BookCardProps) {
+export function BookCard({ book, inLibrary, onAction, onEdit }: BookCardProps) {
   const [imgError, setImgError] = useState(false);
 
   const stars = Math.round(book.rating / 2);
@@ -16,11 +17,11 @@ export function BookCard({ book, inLibrary, onAction }: BookCardProps) {
 
   return (
     <article
-      className="card-glass card-stagger group flex flex-col overflow-hidden"
+      className="card-glass card-stagger group flex overflow-hidden"
       style={{ padding: 0 }}
     >
       <div
-        className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--surface-3)]"
+        className="relative h-32 w-[85px] shrink-0 overflow-hidden bg-[var(--surface-3)]"
         style={!hasCover ? { background: book.coverColor } : undefined}
       >
         {hasCover ? (
@@ -32,65 +33,52 @@ export function BookCard({ book, inLibrary, onAction }: BookCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-white/80">
-            <BookOpen className="h-12 w-12" />
-            <span className="text-center text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">
+          <div className="flex h-full flex-col items-center justify-center gap-1 p-2 text-white/80">
+            <BookOpen className="h-6 w-6" />
+            <span className="text-center text-[8px] font-bold uppercase tracking-[0.15em] opacity-70 leading-tight">
               {book.category}
             </span>
           </div>
         )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 transition-all duration-300 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0">
-          {onAction && (
-            <button
-              onClick={() => onAction(book)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur-md text-white transition hover:bg-white/30 hover:scale-110"
-              title={inLibrary ? 'Voir détails' : 'Ajouter à la bibliothèque'}
-            >
-              {inLibrary ? <Eye className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            </button>
-          )}
-        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <span className="text-[9px] uppercase tracking-[0.3em] text-[var(--text-muted)] font-bold">
-          {book.category}
-        </span>
-
-        <h3 className="font-syne text-base font-bold leading-tight text-[var(--text)]">
-          {book.title}
-        </h3>
-
-        <p className="text-xs text-[var(--text-muted)]">{book.author}</p>
-
-        <div className="flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-3 w-3 ${i < stars ? 'fill-[var(--warning)] text-[var(--warning)]' : 'text-[var(--surface-3)]'}`}
-            />
-          ))}
+      <div className="flex min-w-0 flex-1 flex-col gap-1 p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-syne text-sm font-bold leading-tight text-[var(--text)] truncate">
+              {book.title}
+            </h3>
+            <p className="text-[11px] text-[var(--text-muted)] truncate">{book.author}</p>
+          </div>
+          <div className="flex shrink-0 gap-1">
+            {inLibrary && onEdit && (
+              <button onClick={() => onEdit(book)} className="rounded-lg p-1 text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--accent)] transition" title="Modifier">
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {onAction && !inLibrary && (
+              <button onClick={() => onAction(book)} className="rounded-lg p-1 text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--primary)] transition" title="Ajouter à la bibliothèque">
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <p className="mt-auto text-[11px] leading-5 text-[var(--text-muted)] line-clamp-2">
-          {book.summary}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`h-2.5 w-2.5 ${i < stars ? 'fill-[var(--warning)] text-[var(--warning)]' : 'text-[var(--surface-3)]'}`} />
+            ))}
+          </div>
+          {inLibrary && (
+            <span className="rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.15em]"
+              style={{ background: `${book.coverColor}20`, color: book.coverColor, border: `1px solid ${book.coverColor}40` }}>
+              {book.status}
+            </span>
+          )}
+        </div>
 
-        {inLibrary && (
-          <span
-            className="self-start rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em]"
-            style={{
-              background: `${book.coverColor}20`,
-              color: book.coverColor,
-              border: `1px solid ${book.coverColor}40`,
-            }}
-          >
-            {book.status}
-          </span>
-        )}
+        <p className="text-[11px] leading-4 text-[var(--text-muted)] line-clamp-1">{book.summary}</p>
       </div>
     </article>
   );

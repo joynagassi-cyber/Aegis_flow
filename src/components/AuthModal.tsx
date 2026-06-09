@@ -49,7 +49,7 @@ export const AuthModal = ({ onSuccess }: { onSuccess: () => void }) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--bg)]/95 backdrop-blur-xl p-4">
       <div className="card-glass w-full max-w-sm p-8 space-y-8 border border-[var(--border)] shadow-2xl">
         <div className="flex flex-col items-center gap-4">
-          <Logo variant="glass" size={32} />
+          <Logo size={32} />
           <div className="text-center">
             <h2 className="font-syne font-extrabold text-2xl text-[var(--text)] tracking-wider uppercase">Aegis Flow</h2>
             <p className="text-xs text-[var(--text-muted)] mt-1 uppercase tracking-widest font-bold">

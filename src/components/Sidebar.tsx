@@ -2,14 +2,14 @@ import { type ElementType } from 'react';
 import {
   LayoutDashboard, CalendarDays, CheckCircle2, BookOpen, Rocket,
   Sparkles, BarChart3, Clock, Timer, Settings2, User, MessageSquare,
-  ChevronLeft, ChevronRight, Archive,
+  ChevronLeft, ChevronRight, Archive, Target, History,
 } from 'lucide-react';
 import { Logo } from './Logo';
 
 export type TabId =
   | 'overview' | 'daily' | 'tasks' | 'books' | 'geoai'
   | 'journal' | 'analytics' | 'planning' | 'pomodoro' | 'settings' | 'profile'
-  | 'chat' | 'artifacts';
+  | 'chat' | 'artifacts' | 'objectives' | 'sessions';
 
 export interface SidebarTab {
   id: TabId;
@@ -24,7 +24,9 @@ export const SIDEBAR_TABS: SidebarTab[] = [
   { id: 'planning', label: 'Planning', icon: Clock, category: 'operations' },
   { id: 'pomodoro', label: 'Pomodoro', icon: Timer, category: 'operations' },
   { id: 'chat', label: 'IA Chat', icon: MessageSquare, category: 'operations' },
+  { id: 'sessions', label: 'Sessions', icon: History, category: 'operations' },
   { id: 'overview', label: 'Vue générale', icon: LayoutDashboard, category: 'progress' },
+  { id: 'objectives', label: 'Objectifs SaaS', icon: Target, category: 'progress' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, category: 'progress' },
   { id: 'journal', label: 'Journal', icon: Sparkles, category: 'progress' },
   { id: 'books', label: 'Bibliothèque', icon: BookOpen, category: 'resources' },
@@ -70,7 +72,7 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`sidebar fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xl transition-all duration-300 ${
+        className={`sidebar fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-[var(--border)] bg-[var(--bg)] transition-all duration-300 ${
           collapsed ? 'w-[68px]' : 'w-[240px]'
         } ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
@@ -123,18 +125,31 @@ export function Sidebar({
                       key={tab.id}
                       type="button"
                       onClick={() => onTabChange(tab.id)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
+                      className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
                         isActive
                           ? 'text-white shadow-[0_0_20px_rgba(0,102,255,0.2)]'
-                          : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'
+                          : 'text-[var(--text-muted)]'
                       }`}
                       style={isActive ? { background: catColor.accent } : undefined}
                       title={collapsed ? tab.label : undefined}
                     >
-                      <Icon
-                        className="h-4 w-4 shrink-0"
-                        style={isActive ? { color: '#FFFFFF' } : { color: catColor.accent }}
-                      />
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-white/20'
+                            : 'bg-[var(--surface-3)]/40 group-hover:bg-[var(--surface-3)]'
+                        }`}
+                      >
+                        <Icon
+                          className="h-3.5 w-3.5 shrink-0"
+                          style={{
+                            color: isActive
+                              ? '#FFFFFF'
+                              : 'var(--text)',
+                            opacity: isActive ? 1 : 0.5,
+                          }}
+                        />
+                      </span>
                       {!collapsed && <span>{tab.label}</span>}
                       {isActive && !collapsed && (
                         <span

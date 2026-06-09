@@ -69,15 +69,15 @@ export function ChatBubble({ message, onSelectArtifact, toolCalls }: ChatMessage
       <div className={`group max-w-[85%] space-y-2 ${isUser ? 'items-end' : 'items-start'}`}>
         {hasToolCalls && <ToolCallBubble calls={toolCalls} />}
         {hasContent && (
-          <div className={`rounded-2xl px-4 py-3 ${
+          <div className={`rounded-2xl px-5 py-4 ${
             isUser
-              ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/20'
-              : 'bg-[var(--surface-2)] border border-[var(--border)]'
+              ? 'bg-[var(--primary)]/8 border border-[var(--primary)]/15'
+              : 'bg-[var(--surface)] border border-[var(--border)]'
           }`}>
             {isUser ? (
               <p className="text-sm leading-6 text-[var(--text)] whitespace-pre-wrap">{message.content}</p>
             ) : (
-              <div className="prose prose-sm max-w-none text-[var(--text)]">
+              <div className="prose prose-sm prose-invert max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{

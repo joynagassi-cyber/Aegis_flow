@@ -5,6 +5,7 @@ import { ArtifactPanel } from '../components/ArtifactPanel';
 import { TerminalOutput } from '../components/TerminalOutput';
 import { WorkspaceViewer } from '../components/WorkspaceViewer';
 import { streamChat, generateId, scanForArtifacts, resetSeenArtifacts, searchWeb } from '../services/chatService';
+import { getApiBase } from '../services/apiConfig';
 import { saveArtifactsBatch } from '../services/artifactService';
 import { streamAgentChat, generateSessionId } from '../services/agentClient';
 import type { ChatMessage, Artifact } from '../services/chatService';
@@ -41,6 +42,33 @@ export function ChatPage() {
 
   useEffect(() => scrollToBottom(), [messages, streaming, scrollToBottom]);
 
+  useEffect(() => {
+    const sid = sessionIdRef.current;
+    localStorage.setItem('AEGIS_SESSION_ID', sid);
+    const base = getApiBase();
+    fetch(`${base}/api/chat/history/${encodeURIComponent(sid)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: any[]) => {
+        if (rows.length > 0) {
+          const msgs: ChatMessage[] = rows
+            .filter((r: any) => r.role !== 'system')
+            .map((r: any) => ({
+              id: `db_${r.id}`,
+              role: r.role as 'user' | 'assistant',
+              content: r.content,
+              timestamp: new Date(r.created_at).getTime(),
+            }));
+          if (msgs.length > 0) {
+            setMessages(prev => {
+              if (prev.length === 1 && prev[0].id === 'welcome') return msgs;
+              return [...msgs, ...prev.filter(m => m.id !== 'welcome')];
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleClear = () => {
     resetSeenArtifacts();
     setMessages([{ id: 'welcome', role: 'assistant', content: '🧹 Conversation effacée. Que puis-je pour toi ?', timestamp: Date.now() }]);
@@ -73,7 +101,9 @@ export function ChatPage() {
     setStreaming(true);
 
     try {
-      const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const history = [...messages, userMsg]
+        .filter(m => m.id !== 'welcome')
+        .map(m => ({ role: m.role, content: m.content }));
       const systemMsg = webSearch
         ? `Tu es un assistant IA utile intégré à Aegis Flow Dashboard. L'utilisateur active la recherche web. Contexte : ${await searchWeb(text)}`
         : 'Tu es un assistant IA utile intégré à Aegis Flow Dashboard. Réponds en markdown. Quand tu génères du code HTML, JSON, CSV ou markdown dans des blocs de code, préfixe avec ```lang.';
@@ -136,7 +166,9 @@ export function ChatPage() {
     setStreaming(true);
 
     try {
-      const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const history = [...messages, userMsg]
+        .filter(m => m.id !== 'welcome')
+        .map(m => ({ role: m.role, content: m.content }));
       const gen = streamAgentChat(history, { sessionId: sessionIdRef.current });
 
       let chunkCount = 0;

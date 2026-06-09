@@ -4,6 +4,7 @@ import { streamText, stepCountIs } from 'ai';
 import { createAgentTools, createLocalSandbox } from 'bashkit';
 import path from 'path';
 import fs from 'fs';
+import { pool } from '../db.js';
 
 const router = Router();
 
@@ -53,12 +54,12 @@ router.post('/chat', async (req, res) => {
       baseURL: 'https://openrouter.ai/api/v1',
       apiKey,
       headers: {
-        'HTTP-Referer': 'http://localhost:5173',
+        'HTTP-Referer': 'https://aegis-flow.insforge.site',
         'X-Title': 'Aegis Flow Dashboard',
       },
     });
 
-    const model = openrouter(modelName || 'openai/gpt-4o');
+    const model = openrouter.chat(modelName || 'openai/gpt-4o');
 
     const result = streamText({
       model,
@@ -90,9 +91,12 @@ RÈGLES :
       maxRetries: 0,
     });
 
+    let fullContent = '';
+
     for await (const chunk of result.fullStream) {
       switch (chunk.type) {
         case 'text-delta':
+          fullContent += chunk.text || '';
           res.write(`data: ${JSON.stringify({ type: 'text', content: chunk.text })}\n\n`);
           break;
         case 'tool-call':
@@ -107,6 +111,18 @@ RÈGLES :
         case 'finish':
           res.write(`data: ${JSON.stringify({ type: 'done', finishReason: chunk.finishReason, usage: chunk.totalUsage })}\n\n`);
           break;
+      }
+    }
+
+    if (sessionId && fullContent) {
+      try {
+        const userMsg = messages[messages.length - 1]?.content || '';
+        await pool.query(
+          `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2), ($1, 'assistant', $3)`,
+          [sessionId, userMsg, fullContent]
+        );
+      } catch (e) {
+        console.error('Failed to persist agent chat:', e);
       }
     }
   } catch (err: any) {

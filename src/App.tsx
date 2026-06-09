@@ -30,6 +30,7 @@ import { Sidebar, type TabId } from './components/Sidebar';
 import { ArrowRightIcon } from './components/ui/ArrowRightIcon';
 import { LoadingButton } from './components/ui/LoadingButton';
 import { ChatPage } from './pages/ChatPage';
+import { SessionsPage } from './pages/SessionsPage';
 import { ArtifactsPage } from './pages/ArtifactsPage';
 import { LandingPage } from './pages/LandingPage';
 import { Logo } from './components/Logo';
@@ -303,6 +304,8 @@ export default function App() {
         return <ProfilePage key={key} state={state} onUpdateState={setState} />;
       case 'chat':
         return <ChatPage key={key} />;
+      case 'sessions':
+        return <SessionsPage key={key} onOpenSession={(sid) => { setActiveTab('chat'); }} />;
       case 'settings':
         return (
           <SettingsPage
@@ -327,8 +330,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-[var(--text)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,102,255,0.16),transparent_28%),radial-gradient(circle_at_85%_15%,rgba(0,180,255,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(0,230,118,0.08),transparent_26%)]" />
+    <div className="relative min-h-screen text-[var(--text)]">
 
       <Sidebar
         activeTab={activeTab}
@@ -438,8 +440,8 @@ export default function App() {
       {chatOverlayOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:items-end md:p-6 pointer-events-none">
           <div
-            className="pointer-events-auto flex h-[600px] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl border border-white/20 shadow-2xl backdrop-blur-2xl"
-            style={{ background: 'rgba(10, 14, 23, 0.92)', boxShadow: '0 0 60px rgba(0, 180, 255, 0.15), 0 25px 80px rgba(0, 0, 0, 0.5)' }}
+            className="pointer-events-auto flex h-[600px] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] shadow-2xl"
+            style={{ background: 'var(--surface)', boxShadow: '0 0 60px rgba(0, 0, 0, 0.5), 0 25px 80px rgba(0, 0, 0, 0.5)' }}
           >
             <ChatOverlay
               onClose={() => setChatOverlayOpen(false)}

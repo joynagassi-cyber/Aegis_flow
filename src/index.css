@@ -1,28 +1,29 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ==========================================
    THEME VARIABLES — PREMIUM COMMAND CENTER
    ========================================== */
 :root, [data-theme="dark"] {
-  --bg: #030303;          /* Noir absolu profond */
-  --surface: #0a0a0a;     /* Carte principale */
-  --surface-2: #111111;   /* Carte secondaire / Input */
-  --surface-3: #1a1a1a;   /* Élément interne */
+  --bg: #000000;          /* Noir absolu */
+  --surface: #080808;     /* Carte principale */
+  --surface-2: #0e0e0e;   /* Carte secondaire / Input */
+  --surface-3: #181818;   /* Élément interne */
   
   --primary: #0066FF;     /* Bleu Cobalt Électrique */
-  --primary-glow: rgba(0, 102, 255, 0.4);
+  --primary-glow: rgba(0, 102, 255, 0.3);
   --secondary: #0052CC;
   --accent: #00B4FF;      /* Cyan lumineux */
   --success: #00E676;     /* Vert néon pour succès */
   --danger: #FF1744;      /* Rouge néon pour alerte */
   --warning: #FFD600;     /* Jaune pour attention */
   
-  --border: #222222;      /* Bordure subtile */
+  --border: #1e1e1e;      /* Bordure subtile */
   --border-active: #0066FF; /* Bordure active bleue */
   
-  --text: #FFFFFF;        /* Blanc pur */
-  --text-muted: #888888;  /* Gris neutre */
-  --text-subtle: #444444; /* Gris très sombre */
+  --text: #EDEDED;        /* Blanc cassé pour moins de fatigue */
+  --text-muted: #7f7f7f;  /* Gris neutre */
+  --text-subtle: #3d3d3d; /* Gris très sombre */
 }
 
 [data-theme="light"] {
@@ -55,17 +56,6 @@ body {
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
   overflow-x: hidden;
-  /* Subtle grid pattern background for tech feel */
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-[data-theme="light"] body {
-  background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
 }
 
 .font-syne { font-family: 'Syne', sans-serif; }
@@ -73,7 +63,7 @@ body {
 .font-body { font-family: 'DM Sans', sans-serif; }
 
 /* ==========================================
-   COMMAND CARDS — MODULE STYLE
+   COMMAND CARDS — MODULE STYLE (3D DEPTH)
    ========================================== */
 .command-card {
   background: var(--surface);
@@ -83,14 +73,20 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* Light Mode - High Contrast & Clean */
 [data-theme="light"] .command-card {
   background: #FFFFFF;
   border: 1px solid #E0E0E0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="light"] .command-card:hover {
@@ -106,10 +102,19 @@ body {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
 }
 
+.command-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.4), transparent);
+}
+
 .command-card:hover {
   border-color: var(--border-active);
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px -12px var(--primary-glow);
+  box-shadow:
+    0 12px 40px -12px var(--primary-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .command-card-small {
@@ -118,43 +123,29 @@ body {
 }
 
 /* ==========================================
-   GLASSMORPHISM CARDS — VERRE DÉPOLI
+   CARDS — SOLID DARK SURFACE
    ========================================== */
 .card-glass {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 102, 255, 0.08);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
 [data-theme="light"] .card-glass {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 24px rgba(0, 102, 255, 0.06);
-}
-
-.card-glass::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .card-glass:hover {
-  transform: translateY(-2px);
-  border-color: rgba(0, 102, 255, 0.25);
-  box-shadow: 0 12px 48px rgba(0, 102, 255, 0.15);
-}
-
-[data-theme="light"] .card-glass:hover {
-  border-color: rgba(0, 102, 255, 0.3);
-  box-shadow: 0 12px 48px rgba(0, 102, 255, 0.12);
+  border-color: var(--border-active);
 }
 
 .card-glass-small {
@@ -163,13 +154,8 @@ body {
 }
 
 .card-glass-blue {
-  background: rgba(0, 102, 255, 0.06);
-  border-color: rgba(0, 102, 255, 0.15);
-}
-
-[data-theme="light"] .card-glass-blue {
-  background: rgba(0, 102, 255, 0.04);
-  border-color: rgba(0, 102, 255, 0.12);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 
 /* ==========================================
@@ -537,6 +523,22 @@ body {
   width: 50%;
   background: linear-gradient(90deg, #0066FF, #00B4FF, #00E676);
   animation: sync-bar 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==========================================
+   PROSE — MARKDOWN STYLING
+   ========================================== */
+.prose-invert {
+  --tw-prose-body: var(--text);
+  --tw-prose-headings: var(--text);
+  --tw-prose-links: var(--accent);
+  --tw-prose-bold: var(--text);
+  --tw-prose-code: var(--accent);
+  --tw-prose-pre-bg: var(--surface-3);
+  --tw-prose-quotes: var(--text-muted);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-hr: var(--border);
+  --tw-prose-th-bg: var(--surface-3);
 }
 
 /* ==========================================

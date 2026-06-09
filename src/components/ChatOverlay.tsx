@@ -91,20 +91,20 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-[var(--accent)]" />
-          <span className="text-sm font-bold text-white">IA Chat</span>
+          <span className="text-sm font-bold text-[var(--text)]">IA Chat</span>
           {streaming && <span className="flex gap-0.5"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--accent)]" style={{ animationDelay: '0ms' }} /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--accent)]" style={{ animationDelay: '150ms' }} /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--accent)]" style={{ animationDelay: '300ms' }} /></span>}
           {artifactCount > 0 && (
             <span className="rounded-full bg-[var(--accent)]/20 px-2 py-0.5 text-[10px] text-[var(--accent)]">{artifactCount}</span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={onOpenFull} title="Plein écran" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
+          <button onClick={onOpenFull} title="Plein écran" className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)] transition">
             <PanelRightOpen className="h-4 w-4" />
           </button>
-          <button onClick={onClose} title="Fermer" className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition">
+          <button onClick={onClose} title="Fermer" className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)] transition">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -117,13 +117,13 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-[var(--border)] p-3">
         {artifact && (
-          <div className="mb-2 max-h-[300px] overflow-auto rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
+          <div className="mb-2 max-h-[300px] overflow-auto rounded-xl border border-[var(--accent)]/20 bg-[var(--surface-2)]">
             <ArtifactPanel artifact={artifact} onClose={() => setArtifact(null)} />
           </div>
         )}
-        <div className="flex items-end gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 transition focus-within:border-[var(--accent)]/50">
+        <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2 transition focus-within:border-[var(--accent)]/50">
           <textarea
             ref={inputRef}
             value={input}
@@ -131,13 +131,13 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
             onKeyDown={handleKeyDown}
             placeholder={streaming ? 'Génération en cours...' : 'Pose une question...'}
             rows={1}
-            className="max-h-32 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-white placeholder-white/30 outline-none"
+            className="max-h-32 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-[var(--text)] placeholder-[var(--text-subtle)] outline-none"
             disabled={streaming}
           />
           <div className="flex items-center gap-1">
             <button
               onClick={() => setWebSearch(!webSearch)}
-              className={`rounded-lg p-1.5 transition ${webSearch ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-white/40 hover:bg-white/10 hover:text-white'}`}
+              className={`rounded-lg p-1.5 transition ${webSearch ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]'}`}
               title="Recherche web"
               disabled={streaming}
             >
@@ -146,13 +146,13 @@ export function ChatOverlay({ onClose, onOpenFull }: ChatOverlayProps) {
             <button
               onClick={handleSend}
               disabled={!input.trim() || streaming}
-              className="rounded-lg p-1.5 text-white/40 hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] transition disabled:opacity-30"
+              className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] transition disabled:opacity-30"
             >
               <Send className="h-4 w-4" />
             </button>
             <button
               onClick={handleClear}
-              className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-red-400 transition"
+              className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--danger)] transition"
               title="Effacer"
             >
               <Trash2 className="h-4 w-4" />
