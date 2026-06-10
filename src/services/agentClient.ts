@@ -1,7 +1,7 @@
 import { apiUrl } from './apiConfig';
 
 export interface AgentEvent {
-  type: 'text' | 'tool-start' | 'tool-result' | 'error' | 'done';
+  type: 'text' | 'reasoning' | 'tool-start' | 'tool-result' | 'error' | 'done';
   content?: string;
   toolName?: string;
   args?: any;
@@ -10,6 +10,7 @@ export interface AgentEvent {
   error?: string;
   finishReason?: string;
   usage?: any;
+  reasoning?: string;
 }
 
 export interface ToolCall {
@@ -22,23 +23,23 @@ export interface ToolCall {
 
 export async function* streamAgentChat(
   messages: { role: string; content: string }[],
-  options?: { model?: string; sessionId?: string; reasoning?: string; webSearchEnabled?: boolean }
+  options?: { model?: string; sessionId?: string; reasoning?: string; webSearchEnabled?: boolean; context?: string }
 ): AsyncGenerator<AgentEvent> {
-  const apiKey = localStorage.getItem('API_KEY_OPENROUTER') || '';
   const sessionId = options?.sessionId || `session_${Date.now()}`;
 
   localStorage.setItem('AEGIS_SESSION_ID', sessionId);
 
-  const res = await fetch(apiUrl('/api/agent/chat'), {
+  const res = await fetch(apiUrl('/api/unified/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       messages,
-      model: options?.model || localStorage.getItem('API_MODEL_OPENROUTER') || 'openai/gpt-4o',
+      model: options?.model || localStorage.getItem(`API_MODEL_${localStorage.getItem('API_ACTIVE_PROVIDER') || 'OPENROUTER'}`) || 'openai/gpt-4o',
       sessionId,
+      tools: true,
       reasoning: options?.reasoning || 'off',
       webSearchEnabled: options?.webSearchEnabled || false,
-      ...(apiKey ? { apiKey } : {}),
+      ...(options?.context ? { context: options.context } : {}),
     }),
   });
 

@@ -4,7 +4,7 @@ import { pool } from '../db.js';
 const router = Router();
 
 router.post('/', async (req, res) => {
-  const { messages, model, sessionId } = req.body;
+  const { messages, model, sessionId, context: userContext } = req.body;
   if (!messages || !Array.isArray(messages)) {
     res.status(400).json({ error: 'messages requis' });
     return;
@@ -27,7 +27,10 @@ router.post('/', async (req, res) => {
         'HTTP-Referer': 'https://aegis-flow.insforge.site',
         'X-Title': 'Aegis Flow',
       },
-      body: JSON.stringify({ model: selectedModel, messages, stream: true, max_tokens: 4096 }),
+      const contextMessages = userContext
+        ? [{ role: 'system', content: `${userContext}\n\nRéponds en français. Sois direct, motivateur, militaire-bienveillant.` }, ...messages]
+        : messages;
+      body: JSON.stringify({ model: selectedModel, messages: contextMessages, stream: true, max_tokens: 4096 }),
     });
 
     if (!response.ok) {

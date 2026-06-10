@@ -32,6 +32,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,json,png,svg,ico}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB — singlefile inlines everything into index.html
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/fonts\.googleapis\.com\/.*/i,

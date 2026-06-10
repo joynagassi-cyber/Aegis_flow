@@ -3,8 +3,6 @@ import {
   LogOut,
   Moon,
   Sun,
-  Wifi,
-  WifiOff,
   Menu,
 } from 'lucide-react';
 import { Journal } from './components/Journal';
@@ -21,6 +19,7 @@ import { DailyPage } from './pages/DailyPage';
 import { TasksPage } from './pages/TasksPage';
 import { BooksPage } from './pages/BooksPage';
 import { GeoAIPage } from './pages/GeoAIPage';
+import { TechWatchPage } from './pages/TechWatchPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { PlanningPage } from './pages/PlanningPage';
 import { PomodoroPage } from './pages/PomodoroPage';
@@ -33,7 +32,6 @@ import { ChatPage } from './pages/ChatPage';
 import { SessionsPage } from './pages/SessionsPage';
 import { ArtifactsPage } from './pages/ArtifactsPage';
 import { LandingPage } from './pages/LandingPage';
-import { Logo } from './components/Logo';
 import { ChatFloatingButton } from './components/ChatFloatingButton';
 import { ChatOverlay } from './components/ChatOverlay';
 
@@ -75,6 +73,7 @@ export default function App() {
       {},
     );
   });
+  const [activeProvider, setActiveProvider] = useState(() => localStorage.getItem('API_ACTIVE_PROVIDER') || 'OPENROUTER');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = SyncManager.getState() as Partial<ProgramState> | null;
     return saved?.sidebarCollapsed ?? false;
@@ -117,11 +116,18 @@ export default function App() {
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
 
+    const handleNavigate = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener('navigate', handleNavigate);
+
     return () => {
       clearInterval(quoteInterval);
       clearInterval(syncInterval);
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
+      window.removeEventListener('navigate', handleNavigate);
     };
   }, []);
 
@@ -252,6 +258,29 @@ export default function App() {
     setProviderConfig(prev => ({ ...prev, [`${provider}_${field}`]: value }));
   };
 
+  const handleDeleteProvider = (provider: string) => {
+    localStorage.removeItem(`API_URL_${provider}`);
+    localStorage.removeItem(`API_KEY_${provider}`);
+    localStorage.removeItem(`API_MODEL_${provider}`);
+    setProviderConfig(prev => {
+      const next = { ...prev };
+      delete next[`${provider}_URL`];
+      delete next[`${provider}_KEY`];
+      delete next[`${provider}_MODEL`];
+      return next;
+    });
+    if (activeProvider === provider) {
+      const fallback = ['GEMINI', 'DEEPSEEK', 'OPENROUTER', 'FIREWORKS'].find(p => p !== provider && !!localStorage.getItem(`API_KEY_${p}`)) || 'OPENROUTER';
+      setActiveProvider(fallback);
+      localStorage.setItem('API_ACTIVE_PROVIDER', fallback);
+    }
+  };
+
+  const handleActiveProviderChange = (provider: string) => {
+    setActiveProvider(provider);
+    localStorage.setItem('API_ACTIVE_PROVIDER', provider);
+  };
+
   const signOut = () => {
     authService.signOut();
     setAuth(false);
@@ -293,6 +322,8 @@ export default function App() {
         return <ArtifactsPage key={key} />;
       case 'geoai':
         return <GeoAIPage key={key} />;
+      case 'techwatch':
+        return <TechWatchPage key={key} />;
       case 'journal':
         return <Journal key={key} />;
       case 'analytics':
@@ -304,7 +335,7 @@ export default function App() {
       case 'profile':
         return <ProfilePage key={key} state={state} onUpdateState={setState} />;
       case 'chat':
-        return <ChatPage key={key} initialSessionId={selectedSessionId} />;
+        return <ChatPage key={key} initialSessionId={selectedSessionId} state={state} />;
       case 'sessions':
         return <SessionsPage key={key} onOpenSession={(sid) => { setSelectedSessionId(sid); setActiveTab('chat'); }} />;
       case 'settings':
@@ -315,6 +346,9 @@ export default function App() {
             onThemeChange={setTheme}
             providerConfig={providerConfig}
             onProviderConfig={handleProviderConfig}
+            onDeleteProvider={handleDeleteProvider}
+            activeProvider={activeProvider}
+            onActiveProviderChange={handleActiveProviderChange}
             activeTasks={activeTasks}
             onSync={() =>
               void SyncManager.sync().then(sync =>
@@ -347,88 +381,37 @@ export default function App() {
         className="dashboard-main min-h-screen"
         style={{ marginLeft: window.innerWidth >= 768 ? (sidebarCollapsed ? '68px' : '240px') : '0px' }}
       >
-        <div className="relative mx-auto flex min-h-screen max-w-[1600px] flex-col gap-6 p-4 lg:p-6">
-          <header className="card-glass flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
+        <div className="relative mx-auto flex min-h-screen max-w-[1600px] flex-col p-0 lg:p-0">
+          {/* Barre de contrôle minimale — présente sur toutes les pages */}
+          <div className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg)]/70 px-4 py-2 backdrop-blur-lg">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)] transition hover:border-[var(--primary)] hover:text-[var(--text)] lg:hidden"
+                className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text)] lg:hidden"
               >
                 <Menu className="h-4 w-4" />
               </button>
-
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2">
-                  <Logo size={32} />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-[var(--text-muted)]">Aegis Flow</p>
-                    <h1 className="font-syne text-lg font-bold">Command Center</h1>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Jour</p>
-                  <p className="mt-0.5 font-mono-num text-base font-bold">J{state.currentDay}</p>
-                </div>
-                <div className="hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 sm:block">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Phase</p>
-                  <p className="mt-0.5 text-sm font-bold">{state.currentSaaSPhase}</p>
-                </div>
-              </div>
+              <span className="hidden text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--text-muted)] md:block">Aegis Flow</span>
             </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2">
-                {syncState === 'online' ? (
-                  <Wifi className="h-3.5 w-3.5 text-[var(--success)]" />
-                ) : (
-                  <WifiOff className="h-3.5 w-3.5 text-[var(--danger)]" />
-                )}
-                <span className="text-xs font-bold text-[var(--text-muted)]">
-                  {syncState === 'online' ? 'En ligne' : 'Hors ligne'}
-                </span>
+            <div className="flex items-center gap-1.5">
+              <div className={`flex items-center gap-1.5 rounded-[8px] px-2 py-1 ${syncState === 'online' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                <div className={`h-1.5 w-1.5 rounded-full ${syncState === 'online' ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">{syncState === 'online' ? 'Sync' : 'Off'}</span>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))}
-                className="btn-secondary !rounded-xl !px-3 !py-2"
-                title="Changer le thème"
-              >
-                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <button onClick={() => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))} className="rounded-[8px] p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text)]" title="Thème">
+                {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
               </button>
-
-              <LoadingButton
-                variant="secondary"
-                onClick={() => {
-                  setSyncState('syncing');
-                  void SyncManager.sync().then(sync => {
-                    setSyncState(sync ? 'online' : 'offline');
-                    notify(sync ? 'Synchronisé' : 'Sync locale', sync ? 'Données poussées vers InsForge.' : 'Mode local.');
-                  });
-                }}
-                loading={syncState === 'syncing'}
-                className="!rounded-xl !px-3 !py-2"
-                title="Synchroniser"
-              >
+              <LoadingButton variant="secondary" onClick={() => { setSyncState('syncing'); void SyncManager.sync().then(s => setSyncState(s ? 'online' : 'offline')); }} loading={syncState === 'syncing'} className="!rounded-[8px] !px-2 !py-1" title="Sync">
                 <ArrowRightIcon />
               </LoadingButton>
-
-              <button type="button" onClick={signOut} className="btn-secondary !rounded-xl !px-3 !py-2" title="Déconnexion">
-                <LogOut className="h-4 w-4" />
+              <button onClick={signOut} className="rounded-[8px] p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--danger)]" title="Déconnexion">
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
-          </header>
-
-          <div className="max-w-4xl rounded-[20px] border border-[var(--border)] bg-[var(--surface-2)] px-5 py-3">
-            <p className="text-sm leading-7 text-[var(--text-muted)]">
-              <span className="text-[10px] uppercase tracking-[0.35em] text-[var(--text-subtle)]">Citation · </span>
-              {currentQuote.text}
-              <span className="ml-2 text-xs text-[var(--text-subtle)]">— {currentQuote.author}</span>
-            </p>
           </div>
 
-          <main className="space-y-6 pb-6">
+          <main className="flex-1 p-4 pb-20 lg:p-6">
             <div key={activeTab} className="page-enter">
               {renderPage()}
             </div>
@@ -440,13 +423,15 @@ export default function App() {
 
       {chatOverlayOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 md:items-end md:p-6 pointer-events-none">
+          <div onClick={() => setChatOverlayOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
-            className="pointer-events-auto flex h-[600px] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] shadow-2xl"
-            style={{ background: 'var(--surface)', boxShadow: '0 0 60px rgba(0, 0, 0, 0.5), 0 25px 80px rgba(0, 0, 0, 0.5)' }}
+            className="pointer-events-auto relative flex h-[600px] w-full max-w-[420px] flex-col overflow-hidden rounded-[16px] border border-[var(--border)]"
+            style={{ background: 'var(--surface)', boxShadow: 'var(--shadow-elevated)' }}
           >
             <ChatOverlay
               onClose={() => setChatOverlayOpen(false)}
               onOpenFull={() => { setChatOverlayOpen(false); setActiveTab('chat'); }}
+              state={state}
             />
           </div>
         </div>

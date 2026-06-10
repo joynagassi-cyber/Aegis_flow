@@ -5,25 +5,82 @@
    THEME VARIABLES — PREMIUM COMMAND CENTER
    ========================================== */
 :root, [data-theme="dark"] {
-  --bg: #000000;          /* Noir absolu */
-  --surface: #080808;     /* Carte principale */
-  --surface-2: #0e0e0e;   /* Carte secondaire / Input */
-  --surface-3: #181818;   /* Élément interne */
+  --bg: #0A0A0A;          
+  --surface: #121212;     
+  --surface-2: #1A1A1A;   
+  --surface-3: #242424;   
   
-  --primary: #0066FF;     /* Bleu Cobalt Électrique */
-  --primary-glow: rgba(0, 102, 255, 0.3);
+  --primary: #0066FF;     
+  --primary-glow: rgba(0, 102, 255, 0.25);
   --secondary: #0052CC;
-  --accent: #00B4FF;      /* Cyan lumineux */
-  --success: #00E676;     /* Vert néon pour succès */
-  --danger: #FF1744;      /* Rouge néon pour alerte */
-  --warning: #FFD600;     /* Jaune pour attention */
+  --accent: #00B4FF;      
+  --success: #00E676;     
+  --danger: #FF1744;      
+  --warning: #FFD600;     
   
-  --border: #1e1e1e;      /* Bordure subtile */
-  --border-active: #0066FF; /* Bordure active bleue */
+  --border: #1e1e1e;      
+  --border-active: #0066FF;
   
-  --text: #EDEDED;        /* Blanc cassé pour moins de fatigue */
-  --text-muted: #7f7f7f;  /* Gris neutre */
-  --text-subtle: #3d3d3d; /* Gris très sombre */
+  --text: #EEEEEE;        
+  --text-muted: #888888;  
+  --text-subtle: #4a4a4a;
+  
+  --radius-card: 16px;
+  --radius-card-sm: 12px;
+  --radius-btn: 10px;
+  --radius-input: 10px;
+  --radius-badge: 8px;
+  --radius-checkbox: 6px;
+  
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.3), 0 12px 48px rgba(0, 0, 0, 0.15);
+  --shadow-btn: 0 0 20px var(--primary-glow);
+  --shadow-btn-hover: 0 0 30px var(--primary-glow);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  
+  --font-label: 10px;
+  --font-small: 12px;
+  --font-body: 14px;
+  --font-subtitle: 16px;
+  --font-h3: 18px;
+  --font-h2: 22px;
+  --font-h1: 26px;
+  --font-hero: 36px;
+}
+
+[data-theme="light"] {
+  --bg: #FFFFFF;
+  --surface: #F8F9FA;
+  --surface-2: #E9ECEF;
+  --surface-3: #DEE2E6;
+  
+  --primary: #0066FF;
+  --primary-glow: rgba(0, 102, 255, 0.15);
+  --secondary: #0052CC;
+  --accent: #00B4FF;
+  --success: #00C853;
+  --danger: #D50000;
+  --warning: #FFAB00;
+  
+  --border: #E0E0E0;
+  --border-active: #0066FF;
+  
+  --text: #111111;
+  --text-muted: #666666;
+  --text-subtle: #999999;
+  
+  --radius-card: 16px;
+  --radius-card-sm: 12px;
+  --radius-btn: 10px;
+  --radius-input: 10px;
+  --radius-badge: 8px;
+  --radius-checkbox: 6px;
+  
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 102, 255, 0.06);
+  --shadow-btn: 0 2px 8px rgba(0, 102, 255, 0.2);
+  --shadow-btn-hover: 0 4px 16px rgba(0, 102, 255, 0.25);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="light"] {
@@ -62,36 +119,39 @@ body {
 .font-mono-num { font-family: 'JetBrains Mono', monospace; }
 .font-body { font-family: 'DM Sans', sans-serif; }
 
+.text-label { font-size: var(--font-label); text-transform: uppercase; letter-spacing: 0.3em; color: var(--text-muted); }
+.text-small { font-size: var(--font-small); }
+.text-body { font-size: var(--font-body); }
+.text-subtitle { font-size: var(--font-subtitle); font-weight: 500; }
+.text-h3 { font-size: var(--font-h3); font-weight: 700; font-family: 'Syne', sans-serif; }
+.text-h2 { font-size: var(--font-h2); font-weight: 700; font-family: 'Syne', sans-serif; }
+.text-h1 { font-size: var(--font-h1); font-weight: 700; font-family: 'Syne', sans-serif; }
+.text-hero { font-size: var(--font-hero); font-weight: 700; font-family: 'Syne', sans-serif; }
+
 /* ==========================================
    COMMAND CARDS — MODULE STYLE (3D DEPTH)
    ========================================== */
 .command-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   padding: 24px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-card);
 }
 
 /* Light Mode - High Contrast & Clean */
 [data-theme="light"] .command-card {
   background: #FFFFFF;
   border: 1px solid #E0E0E0;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 [data-theme="light"] .command-card:hover {
-  border-color: #0066FF;
-  box-shadow: 0 8px 20px rgba(0, 102, 255, 0.10);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* Effet de lueur interne subtile en haut */
@@ -111,14 +171,12 @@ body {
 
 .command-card:hover {
   border-color: var(--border-active);
-  transform: translateY(-4px);
-  box-shadow:
-    0 12px 40px -12px var(--primary-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .command-card-small {
-  border-radius: 16px !important;
+  border-radius: var(--radius-card-sm) !important;
   padding: 16px 20px !important;
 }
 
@@ -128,11 +186,9 @@ body {
 .card-glass {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-card);
   padding: 24px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: var(--shadow-card);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -141,15 +197,16 @@ body {
 [data-theme="light"] .card-glass {
   background: #FFFFFF;
   border: 1px solid #E0E0E0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card);
 }
 
 .card-glass:hover {
   border-color: var(--border-active);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .card-glass-small {
-  border-radius: 16px !important;
+  border-radius: var(--radius-card-sm) !important;
   padding: 16px 20px !important;
 }
 
@@ -196,27 +253,33 @@ body {
 .btn-primary {
   background: var(--primary);
   color: #FFFFFF;
-  border-radius: 12px;
+  border-radius: var(--radius-btn);
   padding: 12px 24px;
   font-family: 'DM Sans', sans-serif;
   font-weight: 700;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 0 20px var(--primary-glow);
+  box-shadow: var(--shadow-btn);
   border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary:hover {
   background: var(--secondary);
-  box-shadow: 0 0 30px var(--primary-glow);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-btn-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
 }
 
 /* Bouton Secondaire */
@@ -224,12 +287,12 @@ body {
   background: var(--surface-2);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-btn);
   padding: 12px 24px;
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -241,6 +304,11 @@ body {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--surface-3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: scale(0.97);
 }
 
 /* Badges / Pills */
@@ -297,7 +365,7 @@ body {
 .checkbox-custom {
   width: 24px;
   height: 24px;
-  border-radius: 8px; /* Carré arrondi moderne */
+  border-radius: var(--radius-checkbox);
   border: 2px solid var(--border);
   transition: all 0.2s ease;
   display: flex;
@@ -348,14 +416,14 @@ body {
   );
 }
 
-/* Improve button contrast in light mode */
+/* Light mode button refinements */
 [data-theme="light"] .btn-primary {
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+  box-shadow: var(--shadow-btn);
 }
 
 [data-theme="light"] .btn-secondary {
-  background: #F8F9FA;
-  border-color: #DEE2E6;
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 .animate-pulse-slow {
@@ -557,4 +625,92 @@ body {
     position: fixed;
     z-index: 40;
   }
+}
+
+/* ==========================================
+   MARKDOWN PREVIEW — Claude-like Rendering
+   ========================================== */
+.markdown-preview {
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 14px;
+  max-width: 100%;
+}
+
+.markdown-preview > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-preview > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-preview code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9em;
+}
+
+.markdown-preview pre {
+  margin: 0;
+}
+
+.markdown-preview pre div {
+  background: transparent !important;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+}
+
+.markdown-preview tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-preview a:hover {
+  opacity: 0.85;
+}
+
+.markdown-preview ul ul,
+.markdown-preview ol ol,
+.markdown-preview ul ol,
+.markdown-preview ol ul {
+  margin-bottom: 0;
+}
+
+.markdown-preview img {
+  display: block;
+}
+
+/* ==========================================
+   ARTIFACT PANEL — Internal Scroll Fix
+   ========================================== */
+.artifact-panel-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.artifact-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* ==========================================
+   SYNTAX HIGHLIGHTER — Premium Theme Enhancements
+   ========================================== */
+.linenumber {
+  opacity: 0.4;
+  font-size: 11px;
+  user-select: none;
+}
+
+.react-syntax-highlighter-line-number {
+  opacity: 0.4;
+  min-width: 2.5em;
+  padding-right: 1em;
+  text-align: right;
+  user-select: none;
 }

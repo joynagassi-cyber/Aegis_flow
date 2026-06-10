@@ -80,6 +80,30 @@ router.get('/sessions', async (req, res) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  const { q, limit } = req.query;
+  if (!q || typeof q !== 'string') {
+    res.status(400).json({ error: 'query param q required' });
+    return;
+  }
+  try {
+    const searchTerm = q.trim().slice(0, 200);
+    const { rows } = await pool.query(
+      `SELECT *,
+        ts_rank(to_tsvector('french', title || ' ' || content), plainto_tsquery('french', $1)) AS rank
+       FROM artifacts
+       WHERE to_tsvector('french', title || ' ' || content) @@ plainto_tsquery('french', $1)
+          OR title ILIKE $2 OR content ILIKE $2
+       ORDER BY rank DESC, created_at DESC
+       LIMIT $3`,
+      [searchTerm, `%${searchTerm}%`, parseInt((limit as string) || '50')]
+    );
+    res.json(rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM artifacts WHERE id=$1', [req.params.id]);

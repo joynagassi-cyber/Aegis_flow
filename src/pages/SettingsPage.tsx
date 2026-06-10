@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
-import { Bell, CheckCircle2, Code2, Globe, Loader2, Moon, Sun, Wifi } from 'lucide-react';
+import { Bell, CheckCircle2, Code2, Globe, Loader2, Moon, Sun, Trash2, Wifi } from 'lucide-react';
 import { InfoTile } from '../components/ui/InfoTile';
 import { ModelSelector } from '../components/ModelSelector';
 import { COMMAND_QUOTES } from '../utils/quotes';
@@ -12,6 +12,9 @@ interface SettingsPageProps {
   onThemeChange: (theme: ThemeMode) => void;
   providerConfig: Record<string, string>;
   onProviderConfig: (provider: string, field: 'URL' | 'KEY' | 'MODEL', value: string) => void;
+  onDeleteProvider: (provider: string) => void;
+  activeProvider: string;
+  onActiveProviderChange: (provider: string) => void;
   activeTasks: number;
   onSync: () => void;
   daysCount: number;
@@ -27,7 +30,7 @@ const PROVIDER_INFO: Record<string, { label: string; defaultModel: string }> = {
 };
 
 export function SettingsPage({
-  theme, onThemeChange, providerConfig, onProviderConfig, activeTasks, onSync, daysCount,
+  theme, onThemeChange, providerConfig, onProviderConfig, onDeleteProvider, activeProvider, onActiveProviderChange, activeTasks, onSync, daysCount,
 }: SettingsPageProps) {
   const [testResults, setTestResults] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [testing, setTesting] = useState<string | null>(null);
@@ -75,18 +78,41 @@ export function SettingsPage({
           </div>
           {PROVIDER_NAMES.map(provider => {
             const info = PROVIDER_INFO[provider];
+            const isActive = activeProvider === provider;
+            const hasKey = !!providerConfig[`${provider}_KEY`];
             return (
-              <div key={provider} className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+              <div key={provider} className={`space-y-3 rounded-2xl border p-4 transition ${isActive ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-[var(--border)] bg-[var(--surface-2)]'}`}>
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-muted)]">{info.label}</p>
-                  <button
-                    onClick={() => handleTest(provider)}
-                    disabled={testing === provider}
-                    className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
-                  >
-                    {testing === provider ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-                    Test
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onActiveProviderChange(provider)}
+                      className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition ${isActive ? 'border-[var(--accent)]' : 'border-[var(--text-muted)]'}`}
+                      title="Utiliser ce provider"
+                    >
+                      {isActive && <div className="h-2 w-2 rounded-full bg-[var(--accent)]" />}
+                    </button>
+                    <p className={`text-xs font-bold uppercase tracking-[0.25em] ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}>{info.label}</p>
+                    {hasKey && <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-400">✓ clé</span>}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleTest(provider)}
+                      disabled={testing === provider || !hasKey}
+                      className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] transition hover:border-[var(--primary)] hover:text-[var(--primary)] disabled:opacity-30"
+                    >
+                      {testing === provider ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                      Test
+                    </button>
+                    {hasKey && (
+                      <button
+                        onClick={() => onDeleteProvider(provider)}
+                        className="rounded-lg border border-[var(--border)] p-1.5 text-[var(--text-muted)] transition hover:border-red-500/50 hover:text-red-400"
+                        title="Supprimer cette clé API"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <input
                   value={providerConfig[`${provider}_URL`] ?? ''}

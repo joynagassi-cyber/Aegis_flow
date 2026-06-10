@@ -5,34 +5,45 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   artifacts?: Artifact[];
+  reasoning?: string;
   timestamp: number;
 }
 
 export interface Artifact {
   id: string;
-  type: 'markdown' | 'html' | 'json' | 'csv' | 'pdf';
+  type: 'markdown' | 'html' | 'json' | 'csv' | 'pdf' | 'chart' | 'diagram' | 'widget' | 'dashboard' | 'notebook' | 'flow';
   title: string;
   content: string;
   language?: string;
+  metadata?: Record<string, unknown>;
 }
 
 function loadConfig() {
+  const active = localStorage.getItem('API_ACTIVE_PROVIDER') || 'OPENROUTER';
+  const key = localStorage.getItem(`API_KEY_${active}`) || '';
   return {
-    apiKey: localStorage.getItem('API_KEY_OPENROUTER') || '',
-    apiUrl: localStorage.getItem('API_URL_OPENROUTER') || 'https://openrouter.ai/api/v1/chat/completions',
-    model: localStorage.getItem('API_MODEL_OPENROUTER') || 'openai/gpt-4o',
+    apiKey: key,
+    apiUrl: localStorage.getItem(`API_URL_${active}`) || '',
+    model: localStorage.getItem(`API_MODEL_${active}`) || '',
+    activeProvider: active,
   };
 }
 
-export async function* streamChat(messages: { role: string; content: string }[]): AsyncGenerator<string> {
-  const { apiKey, model } = loadConfig();
+export async function* streamChat(messages: { role: string; content: string }[], context?: string): AsyncGenerator<string> {
+  const { model, apiKey } = loadConfig();
 
   const base = getApiBase();
   try {
-    const res = await fetch(`${base}/api/chat`, {
+    const res = await fetch(`${base}/api/unified/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, model, sessionId: localStorage.getItem('AEGIS_SESSION_ID') || '' }),
+      body: JSON.stringify({
+        messages,
+        model,
+        sessionId: localStorage.getItem('AEGIS_SESSION_ID') || '',
+        tools: false,
+        ...(context ? { context } : {}),
+      }),
     });
 
     if (!res.ok) {
@@ -76,14 +87,14 @@ export async function* streamChat(messages: { role: string; content: string }[])
       }
     }
   } catch (e) {
-    if (!apiKey) throw new Error('Clé API OpenRouter manquante — configure dans Réglages > IA');
+  if (!apiKey) throw new Error('Clé API manquante — configure dans Réglages > IA');
     throw e;
   }
 }
 
 export async function* streamChatDirect(messages: { role: string; content: string }[]): AsyncGenerator<string> {
   const { apiKey, apiUrl, model } = loadConfig();
-  if (!apiKey) throw new Error('Clé API OpenRouter manquante — configure dans Réglages > IA');
+    if (!apiKey) throw new Error('Clé API manquante — configure dans Réglages > IA');
 
   const response = await fetch(apiUrl, {
     method: 'POST',

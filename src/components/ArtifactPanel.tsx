@@ -1,189 +1,110 @@
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { SyntaxHighlighter, oneDark } from '../utils/syntaxHighlighter';
-import { X, Download, Code, Eye, FileText } from 'lucide-react';
+import { ArtifactRenderer } from './ArtifactRenderer';
+import { X, Download, FileText, Grid3x3, FileJson, FileType, Image } from 'lucide-react';
+import type { RichArtifact } from '../services/artifactDetector';
 
 interface ArtifactData {
   title: string;
   content: string;
   language?: string;
+  type?: string;
 }
 
 interface ArtifactPanelProps {
   artifact: ArtifactData | null;
   onClose: () => void;
+  onOpenCanvas?: (artifacts: RichArtifact[]) => void;
 }
 
-export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
-  const [tab, setTab] = useState<'preview' | 'code'>('preview');
+function toRichArtifact(a: ArtifactData): RichArtifact {
+  const typeMap: Record<string, string> = {
+    html: 'html', json: 'json', csv: 'csv', markdown: 'markdown', md: 'markdown',
+    svg: 'diagram', mermaid: 'diagram', chart: 'chart', widget: 'widget',
+  };
+  return {
+    id: crypto.randomUUID(),
+    type: (typeMap[a.type || a.language || ''] || 'markdown') as RichArtifact['type'],
+    title: a.title,
+    content: a.content,
+    language: a.language || a.type,
+  };
+}
+
+const EXPORT_FORMATS = [
+  { id: 'md', label: 'Markdown', icon: FileText },
+  { id: 'html', label: 'HTML', icon: FileType },
+  { id: 'json', label: 'JSON', icon: FileJson },
+  { id: 'png', label: 'PNG', icon: Image },
+];
+
+export function ArtifactPanel({ artifact, onClose, onOpenCanvas }: ArtifactPanelProps) {
+  const [showExport, setShowExport] = useState(false);
 
   if (!artifact) return null;
 
-  const handleDownload = () => {
-    const ext = (artifact.language || 'txt') === 'markdown' ? 'md' : artifact.language || 'txt';
-    const blob = new Blob([artifact.content], { type: 'text/plain;charset=utf-8' });
+  const rich = toRichArtifact(artifact);
+
+  const handleDownload = (format?: string) => {
+    const fmt = format || artifact.language || 'txt';
+    const ext = fmt === 'markdown' ? 'md' : fmt;
+    let content = artifact.content;
+
+    if (fmt === 'html') {
+      content = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${artifact.title}</title><style>body{font-family:system-ui;padding:2rem;line-height:1.6;max-width:800px;margin:0 auto}</style></head><body>${artifact.language === 'markdown' ? `<pre>${artifact.content}</pre>` : artifact.content}</body></html>`;
+    } else if (fmt === 'json') {
+      try { content = JSON.stringify(JSON.parse(artifact.content), null, 2); } catch {}
+    }
+
+    const mime: Record<string, string> = { md: 'text/markdown', html: 'text/html', json: 'application/json', csv: 'text/csv', txt: 'text/plain' };
+    const blob = new Blob([content], { type: mime[ext] || 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `artifact.${ext}`;
+    a.download = `${artifact.title.replace(/\s+/g, '-')}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const renderPreview = () => {
-    const lang = artifact.language || '';
-    switch (lang) {
-      case 'html':
-        return (
-          <iframe
-            srcDoc={artifact.content}
-            className="h-full w-full rounded-lg border-0 bg-white"
-            title="HTML Preview"
-            sandbox="allow-scripts"
-          />
-        );
-      case 'json':
-        try {
-          const parsed = JSON.parse(artifact.content);
-          return <JsonTree data={parsed} depth={0} />;
-        } catch {
-          return <pre className="text-sm text-red-400">{artifact.content}</pre>;
-        }
-      case 'csv':
-        return <CsvTable data={artifact.content} />;
-      case 'markdown':
-      case 'md':
-        return (
-          <div className="prose prose-sm prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{artifact.content}</ReactMarkdown>
-          </div>
-        );
-      default:
-        return <pre className="text-sm text-[var(--text)] whitespace-pre-wrap">{artifact.content}</pre>;
-    }
+    setShowExport(false);
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-[var(--accent)]" />
-          <h3 className="text-sm font-bold text-[var(--text)]">{artifact.title}</h3>
+    <div className="artifact-panel-container">
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <FileText className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+          <h3 className="truncate text-sm font-bold text-[var(--text)]">{artifact.title}</h3>
+          <span className="shrink-0 rounded bg-[var(--surface-3)] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[var(--text-muted)]">
+            {rich.type}
+          </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={handleDownload} title="Télécharger" className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition">
-            <Download className="h-4 w-4" />
-          </button>
-          <button onClick={onClose} title="Fermer" className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition">
+        <div className="flex shrink-0 items-center gap-1">
+          <div className="relative">
+            <button onClick={() => setShowExport(!showExport)} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition" title="Exporter">
+              <Download className="h-4 w-4" />
+            </button>
+            {showExport && (
+              <div className="absolute right-0 top-full mt-1 w-36 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl z-50">
+                {EXPORT_FORMATS.map(fmt => (
+                  <button key={fmt.id} onClick={() => handleDownload(fmt.id)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]">
+                    <fmt.icon className="h-3.5 w-3.5" /> {fmt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {onOpenCanvas && (
+            <button onClick={() => onOpenCanvas([rich])} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--accent)]/20 hover:text-[var(--accent)] transition" title="Ouvrir dans le Canvas">
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+          )}
+          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition">
             <X className="h-4 w-4" />
           </button>
         </div>
       </div>
-
-      <div className="flex border-b border-[var(--border)]">
-        <button
-          onClick={() => setTab('preview')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold transition ${
-            tab === 'preview' ? 'border-b-2 border-[var(--accent)] text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-          }`}
-        >
-          <Eye className="h-3.5 w-3.5" /> Aperçu
-        </button>
-        <button
-          onClick={() => setTab('code')}
-          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold transition ${
-            tab === 'code' ? 'border-b-2 border-[var(--accent)] text-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-          }`}
-        >
-          <Code className="h-3.5 w-3.5" /> Code
-        </button>
+      <div className="artifact-panel-content">
+        <ArtifactRenderer artifact={rich} />
       </div>
-
-      <div className="flex-1 overflow-auto p-4">
-        {tab === 'preview' ? (
-          renderPreview()
-        ) : (
-          <SyntaxHighlighter style={oneDark} language={artifact.language || 'markdown'} customStyle={{ borderRadius: '12px', fontSize: '13px' }}>
-            {artifact.content}
-          </SyntaxHighlighter>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function JsonTree({ data, depth }: { data: unknown; depth: number }) {
-  const [collapsed, setCollapsed] = useState(depth > 1);
-  const isObject = data !== null && typeof data === 'object';
-  const isArray = Array.isArray(data);
-  const indent = depth * 16;
-
-  if (!isObject) {
-    const val = typeof data === 'string' ? `"${data}"` : String(data);
-    return <span className={`text-sm ${typeof data === 'string' ? 'text-green-400' : typeof data === 'number' ? 'text-blue-400' : 'text-purple-400'}`}>{val}</span>;
-  }
-
-  const entries = isArray ? (data as unknown[]).map((v, i) => [String(i), v] as const) : Object.entries(data as Record<string, unknown>);
-  const bracket = isArray ? ['[', ']'] : ['{', '}'];
-
-  return (
-    <div>
-      <button onClick={() => setCollapsed(!collapsed)} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
-        {collapsed ? '▶' : '▼'} {bracket[0]}
-        {collapsed ? ` ${entries.length} ${entries.length > 1 ? 'éléments' : 'élément'} ` : ''}
-        {collapsed ? bracket[1] : ''}
-      </button>
-      {!collapsed && (
-        <div className="ml-4 space-y-0.5 border-l border-[var(--border)] pl-3">
-          {entries.map(([key, val]) => (
-            <div key={key} style={{ paddingLeft: indent }}>
-              <span className="text-sm font-bold text-[var(--accent)]">{isArray ? '' : `"${key}"`}</span>
-              {!isArray && <span className="text-sm text-[var(--text-muted)]">: </span>}
-              {val !== null && typeof val === 'object' && Object.keys(val as object).length > 0 ? (
-                <JsonTree data={val} depth={depth + 1} />
-              ) : (
-                <>
-                  {val === null ? <span className="text-sm text-[var(--text-muted)]">null</span> : <JsonTree data={val} depth={depth + 1} />}
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CsvTable({ data }: { data: string }) {
-  const lines = data.split('\n').filter(l => l.trim());
-  if (lines.length < 2) {
-    return <pre className="text-sm text-[var(--text)] whitespace-pre-wrap">{data}</pre>;
-  }
-
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  const rows = lines.slice(1).map(line => line.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
-      <table className="w-full text-sm">
-        <thead>
-          <tr>
-            {headers.map((h, i) => (
-              <th key={i} className="border-b border-[var(--border)] bg-[var(--surface-3)] px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri}>
-              {row.map((cell, ci) => (
-                <td key={ci} className="border-b border-[var(--border)] px-3 py-1.5 text-sm text-[var(--text)]">{cell}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

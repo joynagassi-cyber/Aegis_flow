@@ -1,7 +1,71 @@
-import { useMemo } from 'react';
-import { CheckCircle2, Target, TrendingUp } from 'lucide-react';
+import { useMemo, useEffect, useState, useCallback } from 'react';
+import { CheckCircle2, Target, TrendingUp, ClipboardList, Loader2 } from 'lucide-react';
 import { GEOAI_ROADMAP } from '../data/geoaiRoadmap';
 import { toPercent } from '../utils/helpers';
+import { GEOAI_CHECKLISTS, getChecklistProgress, type ChecklistItem, type SectionChecklist } from '../data/checklists';
+import { fetchChecklistProgress, toggleChecklistItem } from '../services/checklistService';
+
+function GeoAIChecklistCard({ checklist, color }: { checklist: SectionChecklist; color: string }) {
+  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const saved = await fetchChecklistProgress('geoai', checklist.sectionId);
+    setItems(checklist.items.map(item => ({ ...item, done: saved[item.id] ?? item.done })));
+    setLoading(false);
+  }, [checklist]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleToggle = async (itemId: string) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const newDone = !item.done;
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, done: newDone } : i));
+    await toggleChecklistItem('geoai', checklist.sectionId, itemId, newDone);
+  };
+
+  const progress = getChecklistProgress(items);
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-bold">{checklist.sectionLabel}</p>
+        <div className="flex items-center gap-2">
+          {loading && <Loader2 className="h-3 w-3 animate-spin text-[var(--text-muted)]" />}
+          <span className="text-xs font-bold" style={{ color }}>{progress}%</span>
+        </div>
+      </div>
+      <div className="h-1.5 rounded-full bg-[var(--surface-3)] mb-3">
+        <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: color }} />
+      </div>
+      <ul className="space-y-1">
+        {items.map(item => (
+          <li key={item.id}>
+            <button
+              onClick={() => handleToggle(item.id)}
+              className={`w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-all hover:bg-[var(--surface-3)] ${
+                item.done ? 'opacity-50' : ''
+              }`}
+            >
+              <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[8px] font-bold transition-all ${
+                item.done
+                  ? 'border-[var(--success)] bg-[var(--success)] text-white'
+                  : 'border-[var(--border)]'
+              }`}>
+                {item.done ? '✓' : ''}
+              </span>
+              <span className={`text-xs leading-5 ${item.done ? 'text-[var(--text-muted)] line-through' : 'text-[var(--text)]'}`}>
+                {item.text}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function GeoAIPage() {
   const stats = useMemo(() => {
@@ -80,6 +144,23 @@ export function GeoAIPage() {
           </div>
         </div>
       </div>
+
+      <section className="card-glass space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl bg-[var(--success)]/10 p-3 text-[var(--success)]">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-[var(--text-muted)]">Checklists</p>
+            <h3 className="mt-1 font-syne text-xl font-bold">Suivi mensuel Geo-AI</h3>
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {GEOAI_CHECKLISTS.map(cl => (
+            <GeoAIChecklistCard key={cl.sectionId} checklist={cl} color={GEOAI_ROADMAP.mois[parseInt(cl.sectionId) - 1]?.couleur || '#0066FF'} />
+          ))}
+        </div>
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-2">
         {roadmapMonths.map(month => (

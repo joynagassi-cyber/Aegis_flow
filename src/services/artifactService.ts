@@ -92,6 +92,17 @@ export async function getArtifactSessions(): Promise<ArtifactSession[]> {
   return res.json();
 }
 
+export async function searchArtifacts(query: string, limit?: number): Promise<ArtifactRecord[]> {
+  if (!query.trim()) return [];
+  const search = new URLSearchParams();
+  search.set('q', query.trim().slice(0, 200));
+  if (limit) search.set('limit', String(limit));
+  const res = await fetch(apiUrl(`/api/artifacts/search?${search}`));
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.map(mapRecord);
+}
+
 export async function deleteArtifact(id: string): Promise<void> {
   await fetch(apiUrl(`/api/artifacts/${id}`), { method: 'DELETE' });
 }
