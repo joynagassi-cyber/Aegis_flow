@@ -1,0 +1,81 @@
+# Labeler config — auto-labels PRs based on changed paths
+
+# Labels par domaine fonctionnel
+'chat':
+- src/components/ChatBubble*
+- src/components/ChatForm*
+- src/components/ChatFloatingButton*
+- src/components/ChatOverlay*
+- src/pages/ChatPage*
+- src/services/chatService*
+- src/services/agentClient*
+- src/services/agentService*
+- server/routes/chat*
+- server/routes/agent*
+- server/routes/chat-unified*
+
+'tech-watch':
+- src/pages/TechWatchPage*
+- src/services/techwatchService*
+- server/routes/techwatch*
+- server/services/techwatch*
+- server/migrations/004*
+
+'artefacts':
+- src/components/ArtifactPanel*
+- src/components/ArtifactCanvas*
+- src/components/ArtifactRenderer*
+- src/services/artifactDetector*
+- src/services/artifactService*
+- src/services/artifactTransformer*
+- src/store/artifactStore*
+
+'dashboard':
+- src/pages/OverviewPage*
+- src/pages/AnalyticsPage*
+- src/pages/DailyPage*
+
+'validation':
+- src/pages/PlanningPage*
+- src/pages/ProfilePage*
+- src/pages/SessionsPage*
+
+'books':
+- src/pages/BooksPage*
+
+'tasks':
+- src/pages/TasksPage*
+- src/data/checklists*
+- src/services/checklistService*
+- server/routes/checklists*
+- server/migrations/003*
+
+'pomodoro':
+- src/pages/PomodoroPage*
+
+'saas':
+- src/pages/SaaSObjectivesPage*
+
+'geo-ai':
+- src/pages/GeoAIPage*
+- src/data/geoaiTaxonomy*
+
+'settings':
+- src/pages/SettingsPage*
+
+'landing':
+- src/pages/LandingPage*
+
+'backend':
+- server/**/*
+
+'tests':
+- src/__tests__/**/*
+
+'dependencies':
+- package.json
+- package-lock.json
+
+'infra':
+- vercel.json
+- .github/**/*
